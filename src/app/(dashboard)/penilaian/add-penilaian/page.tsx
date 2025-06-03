@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Dosen, getAllDosen } from "@/lib/firestore/dosen";
-import {  SubkriteriaP, getAllSubkriteria } from "@/lib/firestore/sub-kriteria";
+import {  getAllDosen } from "@/lib/firestore/dosen";
+import {   getAllSubkriteria } from "@/lib/firestore/sub-kriteria";
 import { createPenilaian } from "@/lib/firestore/penilaian";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
@@ -11,8 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const AddPenilaianPage = () => {
-  const [dosenList, setDosenList] = useState<Dosen[]>([]);
-  const [subList, setSubList] = useState<SubkriteriaP[]>([]);
+  const [dosenList, setDosenList] = useState<IDosen[]>([]);
+  const [subList, setSubList] = useState<ISubKriteria[]>([]);
   const [dosenId, setDosenId] = useState("");
   const [subkriteriaId, setSubkriteriaId] = useState("");
   const [nilai, setNilai] = useState<number>(0);

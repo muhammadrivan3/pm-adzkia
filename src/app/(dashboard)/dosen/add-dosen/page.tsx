@@ -29,8 +29,8 @@ const DosenForm = () => {
     phone: "",
   });
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // const [loading, setLoading] = useState(false);
+  // const [error, setError] = useState<string | null>(null);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -44,11 +44,12 @@ const DosenForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
+    // setLoading(true);
+    // setError(null);
 
     try {
-      const { name, email, role, status, department, subjects, phone } = formData;
+      const { name, email, role, status, department, subjects, phone } =
+        formData;
       const dosenData = {
         name,
         email,
@@ -80,7 +81,7 @@ const DosenForm = () => {
 
       setTimeout(() => setAlert((prev) => ({ ...prev, show: false })), 3000);
     } catch (error) {
-      setError("Failed to create dosen. Please try again.");
+      // setError("Failed to create dosen. Please try again.");
       console.error(error);
       setAlert({
         type: "error",
@@ -88,9 +89,10 @@ const DosenForm = () => {
         show: true,
       });
       setTimeout(() => setAlert((prev) => ({ ...prev, show: false })), 3000);
-    } finally {
-      setLoading(false);
-    }
+    } 
+    // finally {
+    //   // setLoading(false);
+    // }
   };
 
   return (
@@ -105,48 +107,119 @@ const DosenForm = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="name" className="text-sm font-medium mb-1 block">Nama</label>
-              <Input id="name" name="name" type="text" value={formData.name} onChange={handleChange} required />
+              <label htmlFor="name" className="text-sm font-medium mb-1 block">
+                Nama
+              </label>
+              <Input
+                id="name"
+                name="name"
+                type="text"
+                value={formData.name}
+                onChange={handleChange}
+                required
+              />
             </div>
 
             <div>
-              <label htmlFor="email" className="text-sm font-medium mb-1 block">Email</label>
-              <Input id="email" name="email" type="email" value={formData.email} onChange={handleChange} required />
+              <label htmlFor="email" className="text-sm font-medium mb-1 block">
+                Email
+              </label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+              />
             </div>
 
             <div>
-              <label htmlFor="department" className="text-sm font-medium mb-1 block">Jurusan</label>
-              <Input id="department" name="department" type="text" value={formData.department} onChange={handleChange} required />
+              <label
+                htmlFor="department"
+                className="text-sm font-medium mb-1 block"
+              >
+                Jurusan
+              </label>
+              <Input
+                id="department"
+                name="department"
+                type="text"
+                value={formData.department}
+                onChange={handleChange}
+                required
+              />
             </div>
 
             <div>
-              <label htmlFor="subjects" className="text-sm font-medium mb-1 block">Mata Kuliah (pisahkan dengan koma)</label>
-              <Input id="subjects" name="subjects" type="text" value={formData.subjects} onChange={handleChange} required />
+              <label
+                htmlFor="subjects"
+                className="text-sm font-medium mb-1 block"
+              >
+                Mata Kuliah (pisahkan dengan koma)
+              </label>
+              <Input
+                id="subjects"
+                name="subjects"
+                type="text"
+                value={formData.subjects}
+                onChange={handleChange}
+                required
+              />
             </div>
 
             <div>
-              <label htmlFor="phone" className="text-sm font-medium mb-1 block">Nomor Telepon</label>
-              <Input id="phone" name="phone" type="text" value={formData.phone} onChange={handleChange} />
+              <label htmlFor="phone" className="text-sm font-medium mb-1 block">
+                Nomor Telepon
+              </label>
+              <Input
+                id="phone"
+                name="phone"
+                type="text"
+                value={formData.phone}
+                onChange={handleChange}
+              />
             </div>
 
             <div>
-              <label htmlFor="role" className="text-sm font-medium mb-1 block">Role</label>
-              <select id="role" name="role" value={formData.role} onChange={handleChange} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring">
+              <label htmlFor="role" className="text-sm font-medium mb-1 block">
+                Role
+              </label>
+              <select
+                id="role"
+                name="role"
+                value={formData.role}
+                onChange={handleChange}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              >
                 <option value="lecture">Lecture</option>
                 <option value="admin">Admin</option>
               </select>
             </div>
 
             <div>
-              <label htmlFor="status" className="text-sm font-medium mb-1 block">Status</label>
-              <select id="status" name="status" value={formData.status} onChange={handleChange} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring">
+              <label
+                htmlFor="status"
+                className="text-sm font-medium mb-1 block"
+              >
+                Status
+              </label>
+              <select
+                id="status"
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              >
                 <option value="active">Active</option>
                 <option value="suspended">Suspended</option>
                 <option value="non-active">Non-Active</option>
               </select>
             </div>
 
-            <Button type="submit" className="w-full">Tambah Dosen</Button>
+            <Button type="submit" className="w-full">
+              Tambah Dosen
+            </Button>
           </form>
         </CardContent>
       </Card>

@@ -2,8 +2,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { getAllKriteria, Kriteria } from "@/lib/firestore/kriteria";
-import { getSubkriteriaByKriteriaId, Subkriteria } from "@/lib/firestore/sub-kriteria";
+import { getAllKriteria } from "@/lib/firestore/kriteria";
+import { getSubkriteriaByKriteriaId } from "@/lib/firestore/sub-kriteria";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -11,19 +11,19 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 
 // Tipe data Subkriteria lengkap
-type SubkriteriaWithFullProps = Subkriteria & {
+type SubkriteriaWithFullProps = ISubKriteria & {
   kriteriaId: string;
 };
 
 const AspekPage = () => {
-  const [data, setData] = useState<(Kriteria & { subkriteria: SubkriteriaWithFullProps[] })[]>([]);
+  const [data, setData] = useState<(IKriteria & { subkriteria: SubkriteriaWithFullProps[] })[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const kriteriaList = await getAllKriteria(); // Ambil kriteria dari firestore
         const combined = await Promise.all(
-          kriteriaList.map(async (kriteria: Kriteria) => {
+          kriteriaList.map(async (kriteria: IKriteria) => {
             // Ambil subkriteria berdasarkan kode kriteria
             const subkriteria = await getSubkriteriaByKriteriaId(kriteria.kode);
 

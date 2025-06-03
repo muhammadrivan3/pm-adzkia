@@ -2,8 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import {
-  getAllPenilaian,
-  Penilaian,
+  getAllPenilaian
 } from "@/lib/firestore/penilaian";
 import { getAllDosen } from "@/lib/firestore/dosen";
 import { getAllSubkriteria } from "@/lib/firestore/sub-kriteria";
@@ -13,19 +12,11 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 
-interface Dosen {
-  id: string;
-  name: string;
-}
 
-interface Subkriteria {
-  id: string;
-  subkriteria: string;
-}
 
 const PenilaianPage = () => {
   const [data, setData] = useState<
-    (Penilaian & { id: string; dosenNama: string; subkriteriaNama: string })[]
+    (IPenilaian & { id?: string; dosenNama: string; subkriteriaNama: string })[]
   >([]);
 
   useEffect(() => {
@@ -35,9 +26,9 @@ const PenilaianPage = () => {
         const dosenList = await getAllDosen();
         const subkriteriaList = await getAllSubkriteria();
 
-        const enriched = penilaianList.map((item: any) => {
-          const dosen = dosenList.find((d: Dosen) => d.id === item.dosenId);
-          const sub = subkriteriaList.find((s: Subkriteria) => s.id === item.subkriteriaId);
+          const enriched = penilaianList.map((item: IPenilaian) => {
+          const dosen = dosenList.find((d: IDosen) => d.id === item.dosenId);
+          const sub = subkriteriaList.find((s: ISubKriteria) => s.id === item.subkriteriaId);
           return {
             ...item,
             dosenNama: dosen?.name || "Tidak ditemukan",

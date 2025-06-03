@@ -8,12 +8,11 @@ import {
   deleteDoc,
   query,
   where,
-  doc,
-  DocumentData,
+  doc
 } from "firebase/firestore";
 
 // Fungsi untuk menambah Subkriteria
-export const createSubkriteria = async (data: ISubKriteria) => {
+export const createSubkriteria = async (data: ISubKriteriaCreate) => {
   const ref = collection(db, "subkriteria");
   const docRef = await addDoc(ref, data);
   return docRef.id;

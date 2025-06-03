@@ -1,6 +1,6 @@
 // lib/firestore/dosen.ts
 import { db } from "../firebase";
-import { collection, addDoc, Timestamp, doc, getDoc, updateDoc, deleteDoc, DocumentData, getDocs } from "firebase/firestore";
+import { collection, addDoc, Timestamp, doc, getDoc, updateDoc, deleteDoc,  getDocs } from "firebase/firestore";
 
 // ✅ CREATE - Menambahkan data dosen
 export const createDosen = async (dosen: {

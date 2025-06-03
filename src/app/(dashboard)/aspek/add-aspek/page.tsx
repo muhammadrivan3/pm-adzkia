@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { createKriteria, Kriteria } from "@/lib/firestore/kriteria";
+import { createKriteria } from "@/lib/firestore/kriteria";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -16,14 +16,15 @@ const TambahKriteriaPage = () => {
     setLoading(true);
 
     try {
-      const newKriteria: Kriteria = { kode, kriteria };
-      const id = await createKriteria(newKriteria); // Fungsi untuk menambah kriteria ke Firestore
-    //   toast.success(`Kriteria berhasil ditambahkan dengan ID: ${id}`);
+      const newKriteria: IKriteriaCreate = { kode, kriteria };
+      await createKriteria(newKriteria); // Fungsi untuk menambah kriteria ke Firestore
+      //   toast.success(`Kriteria berhasil ditambahkan dengan ID: ${id}`);
       // Reset form setelah berhasil
       setKode("");
       setKriteria("");
     } catch (error) {
-    //   toast.error("Gagal menambahkan kriteria. Silakan coba lagi.");
+      //   toast.error("Gagal menambahkan kriteria. Silakan coba lagi.");
+      console.log(error);
     } finally {
       setLoading(false);
     }
@@ -34,7 +35,9 @@ const TambahKriteriaPage = () => {
       <h2 className="text-2xl font-semibold mb-6">Tambah Kriteria</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="flex flex-col">
-          <label htmlFor="kode" className="mb-2">Kode Kriteria</label>
+          <label htmlFor="kode" className="mb-2">
+            Kode Kriteria
+          </label>
           <Input
             id="kode"
             value={kode}
@@ -45,7 +48,9 @@ const TambahKriteriaPage = () => {
         </div>
 
         <div className="flex flex-col">
-          <label htmlFor="kriteria" className="mb-2">Nama Kriteria</label>
+          <label htmlFor="kriteria" className="mb-2">
+            Nama Kriteria
+          </label>
           <Input
             id="kriteria"
             value={kriteria}

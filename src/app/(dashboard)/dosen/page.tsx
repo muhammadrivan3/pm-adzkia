@@ -17,7 +17,7 @@ import { useRouter } from "next/navigation";
 
 const DosenPage = () => {
   const router = useRouter();
-  const [dosenData, setDosenData] = useState<any[]>([]);
+  const [dosenData, setDosenData] = useState<IDosen[]>([]);
 
   // Ambil data dosen dari Firestore
   useEffect(() => {

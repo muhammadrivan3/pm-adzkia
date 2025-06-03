@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { getAllPenilaian, Penilaian } from "@/lib/firestore/penilaian";
-import { getAllDosen, Dosen } from "@/lib/firestore/dosen";
-import { getAllSubkriteria, Subkriteria } from "@/lib/firestore/sub-kriteria";
-import { getAllKriteria, Kriteria } from "@/lib/firestore/kriteria";
+import { getAllPenilaian } from "@/lib/firestore/penilaian";
+import { getAllDosen } from "@/lib/firestore/dosen";
+import { getAllSubkriteria } from "@/lib/firestore/sub-kriteria";
+import { getAllKriteria } from "@/lib/firestore/kriteria";
 
 interface DosenWithGap {
   id: string;
@@ -67,7 +67,8 @@ const ProfileMatchingCalculation = () => {
           const subList = subkriteria.filter((s) => s.kriteriaId === k.id);
           const sum = subList.reduce((acc, s) => acc + (d.bobot[s.id] ?? 0), 0);
           const avg = subList.length > 0 ? sum / subList.length : 0;
-          total += avg * (k.bobot ?? 1); // default bobot 1 jika tidak ada
+          // total += avg * (k.bobot ?? 1); // default bobot 1 jika tidak ada
+          total += avg * 1;
         }
         d.total = total;
       }

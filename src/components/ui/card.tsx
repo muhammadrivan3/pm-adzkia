@@ -25,7 +25,7 @@ export const CardContent = ({ children }: { children: React.ReactNode }) => {
 
 export const CardTitle = ({ children , className = ''}: CardProps ) => {
   return (
-    <h2 className="text-xl font-semibold text-gray-800 text-center">
+    <h2 className={`text-xl font-semibold text-gray-800 text-center ${className}`}>
       {children}
     </h2>
   );

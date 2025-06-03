@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState } from "react";
 import { getAllKriteria } from "@/lib/firestore/kriteria";
-import { createSubkriteria, Subkriteria } from "@/lib/firestore/sub-kriteria";
+import { createSubkriteria } from "@/lib/firestore/sub-kriteria";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 // import "react-toastify/dist/ReactToastify.css";
 
 const TambahSubkriteriaPage = () => {
-  const [kriteriaList, setKriteriaList] = useState<any[]>([]);
+  const [kriteriaList, setKriteriaList] = useState<IKriteria[]>([]);
   const [kodeKriteria, setKodeKriteria] = useState<string>("");
   const [subkriteria, setSubkriteria] = useState<string>("");
   const [nilaiTarget, setNilaiTarget] = useState<number>(0);
@@ -36,7 +36,7 @@ const TambahSubkriteriaPage = () => {
     setLoading(true);
 
     try {
-      const newSubkriteria: Subkriteria = {
+      const newSubkriteria: ISubKriteriaCreate = {
         kriteriaId: kodeKriteria,
         subkriteria,
         nilaiTarget,
@@ -51,6 +51,7 @@ const TambahSubkriteriaPage = () => {
       setKodeKriteria(""); // Reset pilihan kriteria
     } catch (error) {
     //   toast.error("Gagal menambahkan subkriteria.");
+        console.error("Gagal mengambil Subkriteria", error);
     } finally {
       setLoading(false);
     }

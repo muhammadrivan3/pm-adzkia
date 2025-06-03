@@ -26,8 +26,8 @@ const UserForm = () => {
     role: "admin",
     status: "active",
   });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // const [loading, setLoading] = useState(false);
+  // const [error, setError] = useState<string | null>(null);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -41,8 +41,8 @@ const UserForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
+    // setLoading(true);
+    // setError(null);
 
     try {
       const { email, password, name, role, status } = formData;
@@ -75,7 +75,7 @@ const UserForm = () => {
       // Hide the alert after 3 seconds
       setTimeout(() => setAlert((prev) => ({ ...prev, show: false })), 3000);
     } catch (error) {
-      setError("Failed to create user. Please try again.");
+      // setError("Failed to create user. Please try again.");
       console.error(error);
       setAlert({
         type: "error",
@@ -84,9 +84,10 @@ const UserForm = () => {
       });
 
       setTimeout(() => setAlert((prev) => ({ ...prev, show: false })), 3000);
-    } finally {
-      setLoading(false);
-    }
+    } 
+    // finally {
+    //   setLoading(false);
+    // }
   };
 
   return (

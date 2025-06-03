@@ -1,5 +1,15 @@
+/* eslint-disable */
+
+
 interface IUser {
   id: string;
+  email: string;
+  password: string;
+  name?: string;
+  role?: string;
+  status?: string;
+}
+interface IUserCreate {
   email: string;
   password: string;
   name?: string;
@@ -23,6 +33,10 @@ interface IKriteria {
   kode: string;
   kriteria: string;
 }
+interface IKriteriaCreate {
+  kode: string;
+  kriteria: string;
+}
 
 interface ISubKriteria {
   id: string;
@@ -33,7 +47,20 @@ interface ISubKriteria {
   tipe: "Core" | "Secondary";
 }
 
+interface ISubKriteriaCreate {
+  kriteriaId: string;
+  subkriteria: string;
+  nilaiTarget: number;
+  kode: string;
+  tipe: "Core" | "Secondary";
+}
 interface IPenilaian {
+  id?: string;
+  dosenId: string;
+  subkriteriaId: string;
+  nilai: number;
+}
+interface IPenilaianCreate {
   id: string;
   dosenId: string;
   subkriteriaId: string;

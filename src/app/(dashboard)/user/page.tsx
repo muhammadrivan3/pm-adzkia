@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 
 const UserPage = () => {
   const router = useRouter(); // Initialize router for navigation
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<IUser[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalAction, setModalAction] = useState<"delete" | "update" | null>(null);
   const [userIdToAction, setUserIdToAction] = useState<string | null>(null);

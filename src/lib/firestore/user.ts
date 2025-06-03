@@ -17,7 +17,7 @@ import { verifyPassword } from "../hashing";
 
 // ✅ CREATE
 export const createUser = async (user: {
-  id:string;
+  // id:string;
   email: string;
   password: string;
   name?: string;

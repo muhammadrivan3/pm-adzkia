@@ -6,16 +6,13 @@ import {
   getDocs,
   updateDoc,
   deleteDoc,
-  query,
-  where,
   doc,
-  DocumentData,
 } from "firebase/firestore";
 
 
 
 // Fungsi untuk menambah Kriteria
-export const createKriteria = async (data: IKriteria) => {
+export const createKriteria = async (data: IKriteriaCreate) => {
   const ref = collection(db, "kriteria");
   const docRef = await addDoc(ref, data);
   return docRef.id;
