@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Cpu, Plus } from "lucide-react";
 
 const PenilaianPage = () => {
   const [data, setData] = useState<
@@ -56,11 +56,19 @@ const PenilaianPage = () => {
         <h1 className="text-2xl font-bold font-serif border-b-2 pb-1 border-blue-500">
           Manajemen Penilaian
         </h1>
-        <Button asChild className="gap-2">
-          <Link href="/penilaian/add-penilaian">
-            <Plus className="w-4 h-4" /> Tambah Penilaian
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild className="gap-2">
+            <Link href="/penilaian/add-penilaian">
+              <Plus className="w-4 h-4" /> Tambah Penilaian
+            </Link>
+          </Button>
+
+          <Button asChild className="gap-2">
+            <Link href="/penilaian/pm">
+              <Cpu className="w-4 h-4" /> Proses PM
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-lg">
