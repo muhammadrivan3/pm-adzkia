@@ -11,9 +11,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash } from "lucide-react"; // Mengambil data dari Firestore
+import { Edit, Plus, Trash } from "lucide-react"; // Mengambil data dari Firestore
 import { deleteDosen, getAllDosen } from "@/lib/firestore/dosen";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 const DosenPage = () => {
   const router = useRouter();
@@ -53,15 +54,17 @@ const DosenPage = () => {
 
   return (
     <div className="w-full min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 p-6">
-      <h1 className="text-3xl font-semibold mb-4">Halaman Dosen</h1>
-
-      {/* Button to add a new user */}
-      <Button asChild className="mb-4">
-        <a href="/dosen/add-dosen" className="flex items-center gap-2">
-          <Edit className="w-4 h-4" /> Tambah Dosen
-        </a>
-      </Button>
-
+     
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold font-serif border-b-2 pb-1 border-blue-500">
+          Manajemen Dosen
+        </h1>
+        <Button asChild className="gap-2">
+          <Link href="/dosen/add-dosen">
+            <Plus className="w-4 h-4" /> Tambah Dosen
+          </Link>
+        </Button>
+      </div>
       {/* Table for displaying the users */}
       <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-lg">
         <Table className="w-full">

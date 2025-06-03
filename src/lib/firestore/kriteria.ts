@@ -20,7 +20,7 @@ export const createKriteria = async (data: IKriteriaCreate) => {
 
 // Fungsi untuk mengambil semua Kriteria
 export const getAllKriteria = async (): Promise<IKriteria[]> => {
-  const ref = collection(db, "I");
+  const ref = collection(db, "kriteria");
   const snapshot = await getDocs(ref);
   return snapshot.docs.map((doc) => doc.data() ) as IKriteria[];
 };

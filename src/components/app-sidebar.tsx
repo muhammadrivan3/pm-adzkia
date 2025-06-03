@@ -50,7 +50,7 @@ const items = [
 
 export function AppSidebar() {
   return (
-    <Sidebar>
+    <Sidebar className="shadow-2xl">
       <SidebarContent>
         <SidebarGroup>
           <div className="flex justify-center items-center">
@@ -68,9 +68,9 @@ export function AppSidebar() {
             </motion.div>
           </div>
 
-          <SidebarGroupLabel>Application</SidebarGroupLabel>
+          <SidebarGroupLabel>Management</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="p-2">
               {items.map((item, index) => (
                 <SidebarMenuItem key={item.title}>
                   <motion.div
@@ -93,7 +93,7 @@ export function AppSidebar() {
                           size={22}
                           className="transition-transform group-hover:scale-110"
                         />
-                        <span className="font-medium text-sm">
+                        <span className=" text-md">
                           {item.title}
                         </span>
                       </a>
