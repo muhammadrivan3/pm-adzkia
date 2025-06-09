@@ -9,6 +9,7 @@ import {
   doc,
   query,
   where,
+  getDoc,
 } from "firebase/firestore";
 
 
@@ -30,7 +31,16 @@ export const getAllPenilaian = async (): Promise<IPenilaian[]> => {
     ...doc.data(),
   })) as IPenilaian[];
 };
-
+// 🔸 Ambil Penilaian Berdasarkan ID
+export const getPenilaianById = async (Id: string) => {
+  const docRef = doc(db, "penilaian", Id);
+  const docSnap = await getDoc(docRef);
+  if (docSnap.exists()) {
+    return docSnap.data();
+  } else {
+    return null; // atau throw new Error("Data tidak ditemukan");
+  }
+};
 // 🔸 Ambil Penilaian Berdasarkan Dosen ID
 export const getPenilaianByDosen = async (dosenId: string) => {
   const ref = collection(db, "penilaian");

@@ -38,7 +38,7 @@ const ActionModal = ({
           <Button
             variant="destructive"
             onClick={onConfirm}
-            className="px-4 py-2 text-white bg-red-600 rounded-md hover:bg-red-700"
+            className={`px-4 py-2 text-white ${confirmText == "Update" ? "bg-blue-600 hover:bg-blue-700":"bg-red-600 hover:bg-red-700"} rounded-md `}
           >
             {confirmText}
           </Button>

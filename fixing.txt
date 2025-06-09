@@ -1,0 +1,5 @@
+1. fitur hapus gak ada
+2. fitur filter gak ada
+3. fitur print cetak gak ada
+4. fitur edit data gak ada
+5. fitur rekapitulasi data belum sesuai

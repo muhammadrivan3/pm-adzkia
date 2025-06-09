@@ -2,9 +2,17 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Plus, Pencil, Trash } from "lucide-react";
+import { Plus, Trash, Edit } from "lucide-react";
 import { getAllUsers, deleteUser } from "@/lib/firestore/user"; // Import from your firestore helper
 import ActionModal from "@/components/ui/ActionModal"; // Import the ActionModal component
 import { useRouter } from "next/navigation";
@@ -13,7 +21,9 @@ const UserPage = () => {
   const router = useRouter(); // Initialize router for navigation
   const [users, setUsers] = useState<IUser[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalAction, setModalAction] = useState<"delete" | "update" | null>(null);
+  const [modalAction, setModalAction] = useState<"delete" | "update" | null>(
+    null
+  );
   const [userIdToAction, setUserIdToAction] = useState<string | null>(null);
 
   useEffect(() => {
@@ -93,8 +103,13 @@ const UserPage = () => {
                   </span>
                 </TableCell>
                 <TableCell className="text-center space-x-2">
-                  <Button size="sm" variant="secondary" className="px-2" onClick={() => openModal(user.id, "update")}>
-                    <Pencil className="w-4 h-4" />
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="px-2"
+                    onClick={() => openModal(user.id, "update")}
+                  >
+                    <Edit className="w-4 h-4" />
                   </Button>
                   <Button
                     size="sm"
@@ -123,7 +138,9 @@ const UserPage = () => {
           }
           closeModal();
         }}
-        title={modalAction === "delete" ? "Hapus Pengguna?" : "Update Pengguna?"}
+        title={
+          modalAction === "delete" ? "Hapus Pengguna?" : "Update Pengguna?"
+        }
         message={
           modalAction === "delete"
             ? "Apakah Anda yakin ingin menghapus pengguna ini?"
