@@ -6,13 +6,21 @@ import { getAllKriteria } from "@/lib/firestore/kriteria";
 import { createSubkriteria } from "@/lib/firestore/sub-kriteria";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 // import { ToastContainer, toast } from "react-toastify";
 // import "react-toastify/dist/ReactToastify.css";
 
 const TambahSubkriteriaPage = () => {
   const [kriteriaList, setKriteriaList] = useState<IKriteria[]>([]);
-  const [kodeKriteria, setKodeKriteria] = useState<string>("");
+  const [selectedKriteria, setSelectedKriteria] = useState<IKriteria | null>(
+    null
+  );
   const [subkriteria, setSubkriteria] = useState<string>("");
   const [nilaiTarget, setNilaiTarget] = useState<number>(0);
   const [tipe, setTipe] = useState<"Core" | "Secondary">("Core");
@@ -36,22 +44,28 @@ const TambahSubkriteriaPage = () => {
     setLoading(true);
 
     try {
+      if (!selectedKriteria) {
+        alert("Kriteria belum dipilih!");
+        return;
+      }
       const newSubkriteria: ISubKriteriaCreate = {
-        kriteriaId: kodeKriteria,
+        kriteriaId: selectedKriteria.id,
+        kriteriaKode: selectedKriteria.kode,
         subkriteria,
         nilaiTarget,
         kode: `SK${Date.now()}`, // Bisa menggunakan timestamp sebagai kode unik
         tipe,
       };
+      console.log(newSubkriteria);
       await createSubkriteria(newSubkriteria); // Fungsi untuk menambah subkriteria ke Firestore
-    //   toast.success("Subkriteria berhasil ditambahkan!");
+      //   toast.success("Subkriteria berhasil ditambahkan!");
       setSubkriteria("");
       setNilaiTarget(0);
       setTipe("Core");
-      setKodeKriteria(""); // Reset pilihan kriteria
+      setSelectedKriteria(null); // Reset pilihan kriteria
     } catch (error) {
-    //   toast.error("Gagal menambahkan subkriteria.");
-        console.error("Gagal mengambil Subkriteria", error);
+      //   toast.error("Gagal menambahkan subkriteria.");
+      console.error("Gagal mengambil Subkriteria", error);
     } finally {
       setLoading(false);
     }
@@ -63,10 +77,15 @@ const TambahSubkriteriaPage = () => {
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Pilih Kriteria */}
         <div className="flex flex-col">
-          <label htmlFor="kodeKriteria" className="mb-2">Pilih Kriteria</label>
+          <label htmlFor="kodeKriteria" className="mb-2">
+            Pilih Kriteria
+          </label>
           <Select
-            value={kodeKriteria}
-            onValueChange={setKodeKriteria}
+            value={selectedKriteria?.id ?? ""}
+            onValueChange={(id) => {
+              const found = kriteriaList.find((k) => k.id === id);
+              setSelectedKriteria(found || null);
+            }}
             required
           >
             <SelectTrigger>
@@ -74,8 +93,8 @@ const TambahSubkriteriaPage = () => {
             </SelectTrigger>
             <SelectContent>
               {kriteriaList.map((kriteria) => (
-                <SelectItem key={kriteria.kode} value={kriteria.kode}>
-                  {kriteria.kriteria}
+                <SelectItem key={kriteria.id} value={kriteria.id}>
+                  {kriteria.kriteria} ({kriteria.kode})
                 </SelectItem>
               ))}
             </SelectContent>
@@ -84,7 +103,9 @@ const TambahSubkriteriaPage = () => {
 
         {/* Nama Subkriteria */}
         <div className="flex flex-col">
-          <label htmlFor="subkriteria" className="mb-2">Nama Subkriteria</label>
+          <label htmlFor="subkriteria" className="mb-2">
+            Nama Subkriteria
+          </label>
           <Input
             id="subkriteria"
             value={subkriteria}
@@ -96,7 +117,9 @@ const TambahSubkriteriaPage = () => {
 
         {/* Nilai Target */}
         <div className="flex flex-col">
-          <label htmlFor="nilaiTarget" className="mb-2">Nilai Target</label>
+          {/* <label htmlFor="nilaiTarget" className="mb-2">
+            Nilai Target
+          </label>
           <Input
             id="nilaiTarget"
             type="number"
@@ -104,7 +127,26 @@ const TambahSubkriteriaPage = () => {
             onChange={(e) => setNilaiTarget(Number(e.target.value))}
             required
             className="border-gray-300"
-          />
+          /> */}
+          <label htmlFor="kodeKriteria" className="mb-2">
+            Target Penilaian
+          </label>
+          <Select
+            value={String(nilaiTarget)} // Convert number to string
+            onValueChange={(value) => setNilaiTarget(Number(value))}
+            required
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Pilih Penilaian" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">Buruk</SelectItem>
+              <SelectItem value="2">Sedang</SelectItem>
+              <SelectItem value="3">Cukup</SelectItem>
+              <SelectItem value="4">Baik</SelectItem>
+              <SelectItem value="5">Sangat Baik</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Tipe */}

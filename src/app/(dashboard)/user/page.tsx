@@ -20,6 +20,9 @@ import { useRouter } from "next/navigation";
 const UserPage = () => {
   const router = useRouter(); // Initialize router for navigation
   const [users, setUsers] = useState<IUser[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalAction, setModalAction] = useState<"delete" | "update" | null>(
     null
@@ -42,7 +45,6 @@ const UserPage = () => {
   };
 
   const handleUpdate = (id: string) => {
-    // console.log(`Update user with ID: ${id}`); // Handle update logic
     router.push(`/user/edit-user/${id}`);
   };
 
@@ -58,6 +60,19 @@ const UserPage = () => {
     setModalAction(null);
   };
 
+  // Filter and search users
+  const filteredUsers = users.filter((user) => {
+    const matchesSearch =
+      (user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
+      (user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
+      (user.role?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
+
+    const matchesRole = roleFilter ? user.role === roleFilter : true;
+    const matchesStatus = statusFilter ? user.status === statusFilter : true;
+
+    return matchesSearch && matchesRole && matchesStatus;
+  });
+
   return (
     <div className="w-full px-6 py-10 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 min-h-screen">
       <div className="flex items-center justify-between mb-6">
@@ -72,6 +87,35 @@ const UserPage = () => {
       </div>
 
       <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-lg">
+        <div className="flex flex-wrap gap-4 p-4 bg-gray-100 dark:bg-gray-800">
+          <input
+            type="text"
+            placeholder="Cari pengguna..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 flex-grow min-w-[200px]"
+          />
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            className="px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">Semua Role</option>
+            <option value="admin">Admin</option>
+            <option value="user">User</option>
+            {/* Add other roles as needed */}
+          </select>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">Semua Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+            {/* Add other statuses as needed */}
+          </select>
+        </div>
         <Table className="w-full">
           <TableCaption>Daftar pengguna aktif dan terdaftar.</TableCaption>
           <TableHeader>
@@ -85,7 +129,7 @@ const UserPage = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users.map((user) => (
+            {filteredUsers.map((user) => (
               <TableRow key={user.id}>
                 <TableCell className="font-medium">{user.id}</TableCell>
                 <TableCell>{user.name}</TableCell>

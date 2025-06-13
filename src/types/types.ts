@@ -32,15 +32,20 @@ interface IKriteria {
   id: string;
   kode: string;
   kriteria: string;
+  persentaseCore: number;
+  persentaseSecondary: number;
 }
 interface IKriteriaCreate {
   kode: string;
   kriteria: string;
+  persentaseCore: number;
+  persentaseSecondary: number;
 }
 
 interface ISubKriteria {
   id: string;
   kriteriaId: string;
+  kriteriaKode: string;
   subkriteria: string;
   nilaiTarget: number;
   kode: string;
@@ -49,6 +54,7 @@ interface ISubKriteria {
 
 interface ISubKriteriaCreate {
   kriteriaId: string;
+  kriteriaKode: string;
   subkriteria: string;
   nilaiTarget: number;
   kode: string;

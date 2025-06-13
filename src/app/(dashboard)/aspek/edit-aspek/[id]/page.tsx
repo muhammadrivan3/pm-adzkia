@@ -1,17 +1,35 @@
-// pages/tambah-kriteria.tsx
 "use client";
 
-import React, { useState } from "react";
-import { createKriteria } from "@/lib/firestore/kriteria";
+import React, { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { getKriteriaById, updateKriteria } from "@/lib/firestore/kriteria";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-const TambahKriteriaPage = () => {
+const EditKriteriaPage = () => {
+  const router = useRouter();
+  const {id} = useParams(); // Ambil ID dari URL (?id=...)
+  const [loading, setLoading] = useState(false);
   const [kode, setKode] = useState("");
   const [kriteria, setKriteria] = useState("");
   const [persentaseCore, setPersentaseCore] = useState(0);
   const [persentaseSecondary, setPersentaseSecondary] = useState(0);
-  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!id) return;
+      const data = await getKriteriaById(id as string);
+      console.log("DATA :",data);
+      if (data) {
+        setKode(data.kode);
+        setKriteria(data.kriteria);
+        setPersentaseCore(data.persentaseCore);
+        setPersentaseSecondary(data.persentaseSecondary);
+      }
+    };
+
+    fetchData();
+  }, [id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,20 +48,18 @@ const TambahKriteriaPage = () => {
         return;
       }
 
-      const newKriteria: IKriteriaCreate = {
+      const updatedData = {
         kode,
         kriteria,
         persentaseCore,
         persentaseSecondary,
       };
-      await createKriteria(newKriteria); // Fungsi untuk menambah kriteria ke Firestore
-      //   toast.success(`Kriteria berhasil ditambahkan dengan ID: ${id}`);
-      // Reset form setelah berhasil
-      setKode("");
-      setKriteria("");
+
+      await updateKriteria(id as string, updatedData);
+      // alert("Kriteria berhasil diperbarui!");
+      router.push("/aspek"); // redirect ke halaman daftar
     } catch (error) {
-      //   toast.error("Gagal menambahkan kriteria. Silakan coba lagi.");
-      console.log(error);
+      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -51,12 +67,10 @@ const TambahKriteriaPage = () => {
 
   return (
     <div className="max-w-2xl mx-auto p-6">
-      <h2 className="text-2xl font-semibold mb-6">Tambah Kriteria</h2>
+      <h2 className="text-2xl font-semibold mb-6">Ubah Kriteria</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="flex flex-col">
-          <label htmlFor="kode" className="mb-2">
-            Kode Kriteria
-          </label>
+          <label htmlFor="kode" className="mb-2">Kode Kriteria</label>
           <Input
             id="kode"
             value={kode}
@@ -67,9 +81,7 @@ const TambahKriteriaPage = () => {
         </div>
 
         <div className="flex flex-col">
-          <label htmlFor="kriteria" className="mb-2">
-            Nama Kriteria
-          </label>
+          <label htmlFor="kriteria" className="mb-2">Nama Kriteria</label>
           <Input
             id="kriteria"
             value={kriteria}
@@ -80,9 +92,7 @@ const TambahKriteriaPage = () => {
         </div>
 
         <div className="flex flex-col">
-          <label htmlFor="persentaseCore" className="mb-2">
-            Presentase Core (%)
-          </label>
+          <label htmlFor="persentaseCore" className="mb-2">Presentase Core (%)</label>
           <Input
             id="persentaseCore"
             type="number"
@@ -94,9 +104,7 @@ const TambahKriteriaPage = () => {
         </div>
 
         <div className="flex flex-col">
-          <label htmlFor="persentaseSecondary" className="mb-2">
-            Presentase Secondary (%)
-          </label>
+          <label htmlFor="persentaseSecondary" className="mb-2">Presentase Secondary (%)</label>
           <Input
             id="persentaseSecondary"
             type="number"
@@ -108,13 +116,11 @@ const TambahKriteriaPage = () => {
         </div>
 
         <Button type="submit" disabled={loading} className="w-full">
-          {loading ? "Sedang Menambah..." : "Tambah Kriteria"}
+          {loading ? "Menyimpan Perubahan..." : "Simpan Perubahan"}
         </Button>
       </form>
-
-      {/* <ToastContainer /> */}
     </div>
   );
 };
 
-export default TambahKriteriaPage;
+export default EditKriteriaPage;

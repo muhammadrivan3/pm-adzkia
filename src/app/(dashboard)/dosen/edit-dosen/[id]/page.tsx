@@ -9,15 +9,14 @@ import { getDosenById, updateDosen } from "@/lib/firestore/dosen"; // Pastikan s
 import BackButton from "@/components/ui/BackButton";
 import { useParams } from "next/navigation";
 
-
 const EditDosenForm = () => {
   const { id } = useParams();
   const [formData, setFormData] = useState({
-    name:  "",
+    name: "",
     email: "",
-    role:  "lecture",
+    role: "lecture",
     status: "active",
-    department:  "",
+    department: "",
     subjects: "",
     phone: "",
   });
@@ -217,9 +216,16 @@ const EditDosenForm = () => {
                 onChange={handleChange}
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm"
               >
-                <option value="lecture">Lecture</option>
-                <option value="admin">Admin</option>
-                <option value="operator">Operator</option>
+                <option value="dosen">Dosen</option>
+                <option value="asdos">Asisten Dosen</option>
+                <option value="staff">Staff TU</option>
+                <option value="keuangan">Staff Keuangan</option>
+                <option value="it">Staff IT</option>
+                <option value="perpustakaan">Pustakawan</option>
+                <option value="kemahasiswaan">Bagian Kemahasiswaan</option>
+                <option value="security">Security</option>
+                <option value="laboran">Teknisi Lab</option>
+                <option value="humas">Humas</option>
               </select>
             </div>
 

@@ -30,7 +30,7 @@ export const getSubkriteriaByKriteriaId = async (kriteriaId: string): Promise<IS
   const ref = collection(db, "subkriteria");
   const q = query(ref, where("kriteriaId", "==", kriteriaId));
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => doc.data() as ISubKriteria);
+  return snapshot.docs.map((doc) => ({id: doc.id, ...doc.data()}) as ISubKriteria);
 };
 
 // Fungsi untuk update Subkriteria
