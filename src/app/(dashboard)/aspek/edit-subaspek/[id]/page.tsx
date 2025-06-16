@@ -1,11 +1,9 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { getDoc, doc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { useParams, useRouter } from "next/navigation";
 import { getAllKriteria } from "@/lib/firestore/kriteria";
-import { updateSubkriteria } from "@/lib/firestore/sub-kriteria";
+import { getSubkriteriaByIdSubkriteria, updateSubkriteria } from "@/lib/firestore/sub-kriteria";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,9 +14,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const EditSubkriteriaPage = ({ params }: { params: { id: string } }) => {
+
+
+const EditSubkriteriaPage = () => {
   const router = useRouter();
-  const { id } = params;
+  // const { id } = params;
+  const {id} = useParams();
 
   const [kriteriaList, setKriteriaList] = useState<IKriteria[]>([]);
   const [selectedKriteria, setSelectedKriteria] = useState<IKriteria | null>(null);
@@ -47,17 +48,14 @@ const EditSubkriteriaPage = ({ params }: { params: { id: string } }) => {
       setFetching(true);
       setError(null);
       try {
-        const docRef = doc(db, "subkriteria", id);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const data = docSnap.data() as ISubKriteria;
+        
+          const data = await getSubkriteriaByIdSubkriteria(id as string);
+          if(data){
           setSubkriteria(data.subkriteria);
           setNilaiTarget(data.nilaiTarget);
           setTipe(data.tipe);
           // Find the kriteria object from kriteriaList or set null temporarily
           setSelectedKriteria({ id: data.kriteriaId, kode: data.kriteriaKode, kriteria: "", persentaseCore: 0, persentaseSecondary: 0 });
-        } else {
-          setError("Subkriteria tidak ditemukan");
         }
       } catch (error) {
         setError("Gagal mengambil data subkriteria");
@@ -96,7 +94,7 @@ const EditSubkriteriaPage = ({ params }: { params: { id: string } }) => {
         nilaiTarget,
         tipe,
       };
-      await updateSubkriteria(id, updatedSubkriteria);
+      await updateSubkriteria(id as string, updatedSubkriteria);
       router.push("/aspek"); // Redirect after update, adjust path as needed
     } catch (error) {
       setError("Gagal memperbarui subkriteria.");

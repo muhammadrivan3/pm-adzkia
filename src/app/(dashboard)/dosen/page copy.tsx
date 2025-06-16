@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Edit, FileDown, Plus, Printer, Trash } from "lucide-react"; // Mengambil data dari Firestore
+import { Edit, Plus, Trash } from "lucide-react"; // Mengambil data dari Firestore
 import { deleteDosen, getAllDosen } from "@/lib/firestore/dosen";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -22,7 +22,6 @@ const DosenPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const resultsRef = useRef<HTMLDivElement>(null);
 
   // Ambil data dosen dari Firestore
   useEffect(() => {
@@ -64,80 +63,17 @@ const DosenPage = () => {
     return matchesSearch && matchesRole && matchesStatus;
   });
 
-  const exportToCsv = () => {
-    if (!filteredDosen.length) {
-      alert("Tidak ada data untuk diekspor.");
-      return;
-    }
-    const headers = [
-      "Nama",
-      "Email",
-      "Role",
-      "Jurusan",
-      "Mata Kuliah",
-      "No. Hp",
-      "Status",
-    ];
-    const rows = filteredDosen.map((dosen) => [
-      dosen.name,
-      dosen.email,
-      dosen.role,
-      dosen.department,
-      dosen.subjects,
-      dosen.phone,
-      dosen.status,
-    ]);
-    const csvContent =
-      "data:text/csv;charset=utf-8," +
-      [headers, ...rows].map((e) => e.join(",")).join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "dosen_report.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const printReport = () => {
-    if (!resultsRef.current) return;
-    const printContents = resultsRef.current.innerHTML;
-    const originalContents = document.body.innerHTML;
-    document.body.innerHTML = printContents;
-    window.print();
-    document.body.innerHTML = originalContents;
-    window.location.reload();
-  };
-
   return (
     <div className="w-full min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 p-6">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold font-serif border-b-2 pb-1 border-blue-500">
           Manajemen Dosen
         </h1>
-        <div className="flex gap-2">
-          <Button asChild className="gap-2">
-            <Link href="/dosen/add-dosen">
-              <Plus className="w-4 h-4" /> Tambah Dosen
-            </Link>
-          </Button>
-          <Button
-            onClick={exportToCsv}
-            disabled={filteredDosen.length === 0}
-            className="flex items-center space-x-2"
-          >
-            <FileDown className="w-4 h-4" />
-            {/* <span>Export</span> */}
-          </Button>
-          <Button
-            onClick={printReport}
-            disabled={filteredDosen.length === 0}
-            className="flex items-center space-x-2"
-          >
-            <Printer className="w-4 h-4" />
-            {/* <span>Print</span> */}
-          </Button>
-        </div>
+        <Button asChild className="gap-2">
+          <Link href="/dosen/add-dosen">
+            <Plus className="w-4 h-4" /> Tambah Dosen
+          </Link>
+        </Button>
       </div>
       {/* Search and filter inputs */}
       <div className="flex flex-wrap gap-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-t-xl border border-b-0 border-gray-200 dark:border-gray-700">
@@ -178,10 +114,7 @@ const DosenPage = () => {
         </select>
       </div>
       {/* Table for displaying the dosen */}
-      <div
-        ref={resultsRef}
-        className="rounded-b-xl overflow-hidden border border-t-0 border-gray-200 dark:border-gray-700 shadow-lg"
-      >
+      <div className="rounded-b-xl overflow-hidden border border-t-0 border-gray-200 dark:border-gray-700 shadow-lg">
         <Table className="w-full">
           <TableCaption>Daftar Dosen Terdaftar</TableCaption>
           <TableHeader>
@@ -239,14 +172,6 @@ const DosenPage = () => {
           </TableBody>
         </Table>
       </div>
-      {/* <div className="flex space-x-4 mt-4">
-        <Button onClick={exportToCsv} disabled={filteredDosen.length === 0}>
-          Export Report
-        </Button>
-        <Button onClick={printReport} disabled={filteredDosen.length === 0}>
-          Print Report
-        </Button>
-      </div> */}
     </div>
   );
 };

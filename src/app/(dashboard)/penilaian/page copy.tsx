@@ -117,68 +117,6 @@ const PenilaianPage = () => {
               <Cpu className="w-4 h-4" /> Proses PM
             </Link>
           </Button>
-
-          <Button
-            className="gap-2"
-            onClick={() => {
-              // Export filtered data to CSV
-              const headers = ["Nama Dosen", "Subkriteria", "Nilai"];
-              const rows: string[][] = [];
-              Object.entries(groupedData).forEach(([dosenNama, items]) => {
-                items.forEach((item) => {
-                  rows.push([dosenNama, item.subkriteriaNama, item.nilai.toString()]);
-                });
-              });
-              const csvContent =
-                "data:text/csv;charset=utf-8," +
-                [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
-              const encodedUri = encodeURI(csvContent);
-              const link = document.createElement("a");
-              link.setAttribute("href", encodedUri);
-              link.setAttribute("download", "penilaian_report.csv");
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-            }}
-          >
-            Export
-          </Button>
-
-          <Button
-            className="gap-2"
-            onClick={() => {
-              // Print filtered data
-              const printWindow = window.open("", "_blank");
-              if (printWindow) {
-                const style = `
-                  <style>
-                    body { font-family: Arial, sans-serif; padding: 20px; }
-                    table { border-collapse: collapse; width: 100%; }
-                    th, td { border: 1px solid #ddd; padding: 8px; }
-                    th { background-color: #f2f2f2; }
-                    h1 { text-align: center; }
-                  </style>
-                `;
-                let html = "<h1>Laporan Penilaian</h1>";
-                html += "<table>";
-                html += "<thead><tr><th>Nama Dosen</th><th>Subkriteria</th><th>Nilai</th></tr></thead>";
-                html += "<tbody>";
-                Object.entries(groupedData).forEach(([dosenNama, items]) => {
-                  items.forEach((item) => {
-                    html += `<tr><td>${dosenNama}</td><td>${item.subkriteriaNama}</td><td>${item.nilai}</td></tr>`;
-                  });
-                });
-                html += "</tbody></table>";
-                printWindow.document.write(style + html);
-                printWindow.document.close();
-                printWindow.focus();
-                printWindow.print();
-                printWindow.close();
-              }
-            }}
-          >
-            Print
-          </Button>
         </div>
       </div>
 

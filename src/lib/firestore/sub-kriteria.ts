@@ -25,6 +25,19 @@ export const getAllSubkriteria = async (): Promise<ISubKriteria[]> => {
   })) as ISubKriteria[];
 };
 
+// Fungsi untuk mengambil Subkriteria berdasarkan ID Subkriteria
+export const getSubkriteriaByIdSubkriteria = async (id: string): Promise<ISubKriteria | null> => {
+  
+  const snapshot = await getDocs(query(collection(db, "subkriteria"), where("__name__", "==", id)));
+
+  if (!snapshot.empty) {
+    const docData = snapshot.docs[0];
+    return { id: docData.id, ...docData.data() } as ISubKriteria;
+  }
+
+  return null;
+};
+
 // Fungsi untuk mengambil semua Subkriteria berdasarkan Kriteria ID
 export const getSubkriteriaByKriteriaId = async (kriteriaId: string): Promise<ISubKriteria[]> => {
   const ref = collection(db, "subkriteria");
