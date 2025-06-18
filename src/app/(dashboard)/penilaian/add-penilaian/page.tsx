@@ -117,8 +117,30 @@ const AddPenilaianPage = () => {
               key={index}
               className="mb-6 p-4 border border-gray-200 rounded-lg shadow-sm bg-gray-50"
             >
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                <div>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                <div >
+                  <Label className="block mb-2 text-sm font-medium text-gray-700">
+                    Kriteria
+                  </Label>
+                  <Select
+                    value={input.subkriteriaId}
+                    onValueChange={(value) =>
+                      handleInputChange(index, "subkriteriaId", value)
+                    }
+                  >
+                    <SelectTrigger className="w-[100%] border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                      <SelectValue placeholder="Pilih Subkriteria" />
+                    </SelectTrigger>
+                    <SelectContent className="w-[50%]">
+                      {subList.map((sub) => (
+                        <SelectItem key={sub.id} value={sub.id}>
+                          {sub.subkriteria}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div >
                   <Label className="block mb-2 text-sm font-medium text-gray-700">
                     Subkriteria
                   </Label>
@@ -128,10 +150,10 @@ const AddPenilaianPage = () => {
                       handleInputChange(index, "subkriteriaId", value)
                     }
                   >
-                    <SelectTrigger className="border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <SelectTrigger className="w-[100%] border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                       <SelectValue placeholder="Pilih Subkriteria" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="w-[50%]">
                       {subList.map((sub) => (
                         <SelectItem key={sub.id} value={sub.id}>
                           {sub.subkriteria}

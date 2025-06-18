@@ -15,20 +15,36 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Cpu,  Plus, Trash } from "lucide-react";
+import {
+  Cpu,
+  PanelBottomClose,
+  PanelLeftClose,
+  Plus,
+  Trash,
+} from "lucide-react";
 import ActionModal from "@/components/ui/ActionModal";
 import { useRouter } from "next/navigation";
+import { getAllKriteria } from "@/lib/firestore/kriteria";
 
 const PenilaianPage = () => {
   const router = useRouter();
   const [data, setData] = useState<
-    (IPenilaian & { id?: string; dosenNama: string; subkriteriaNama: string })[]
+    (IPenilaian & {
+      id?: string;
+      dosenNama: string;
+      subkriteriaNama: string;
+      kriteriaNama: string;
+    })[]
   >([]);
   const [searchQuery, setSearchQuery] = useState("");
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalAction, setModalAction] = useState<"delete" | "update" | null>(null);
-  const [penilaianIdToAction, setPenilaianIdToAction] = useState<string | null>();
+  const [modalAction, setModalAction] = useState<"delete" | "update" | null>(
+    null
+  );
+  const [penilaianIdToAction, setPenilaianIdToAction] = useState<
+    string | null
+  >();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -36,15 +52,20 @@ const PenilaianPage = () => {
         const penilaianList = await getAllPenilaian();
         const dosenList = await getAllDosen();
         const subkriteriaList = await getAllSubkriteria();
+        const kriteriaList = await getAllKriteria();
 
         const enriched = penilaianList.map((item: IPenilaian) => {
           const dosen = dosenList.find((d: IDosen) => d.id === item.dosenId);
           const sub = subkriteriaList.find(
             (s: ISubKriteria) => s.id === item.subkriteriaId
           );
+          const kriteria = kriteriaList.find(
+            (k: IKriteria) => k.id === sub?.kriteriaId
+          );
           return {
             ...item,
             dosenNama: dosen?.name || "Tidak ditemukan",
+            kriteriaNama: kriteria?.kriteria || "Tidak ditemukan",
             subkriteriaNama: sub?.subkriteria || "Tidak ditemukan",
           };
         });
@@ -84,20 +105,49 @@ const PenilaianPage = () => {
   // Filter and search penilaian
   const filteredData = data.filter((item) => {
     const matchesSearch =
-      (item.dosenNama?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
-      (item.subkriteriaNama?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
+      (item.dosenNama?.toLowerCase().includes(searchQuery.toLowerCase()) ??
+        false) ||
+      (item.subkriteriaNama
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase()) ??
+        false) ||
       (item.nilai?.toString().includes(searchQuery) ?? false);
 
     return matchesSearch;
   });
 
   // Group filteredData by dosenNama
-  const groupedData = filteredData.reduce((groups, item) => {
-    const group = groups[item.dosenNama] || [];
-    group.push(item);
-    groups[item.dosenNama] = group;
-    return groups;
-  }, {} as Record<string, typeof filteredData>);
+  // const groupedData = filteredData.reduce((groups, item) => {
+  //   const group = groups[item.dosenNama] || [];
+  //   group.push(item);
+  //   groups[item.dosenNama] = group;
+  //   return groups;
+  // }, {} as Record<string, typeof filteredData>);
+  const [hiddenDosen, setHiddenDosen] = useState<Record<string, boolean>>({});
+  const [hiddenKriteria, setHiddenKriteria] = useState<
+    Record<string, Record<string, boolean>>
+  >({});
+
+  const groupedData = filteredData.reduce((acc, item) => {
+    if (!acc[item.dosenNama]) acc[item.dosenNama] = {};
+    if (!acc[item.dosenNama][item.kriteriaNama])
+      acc[item.dosenNama][item.kriteriaNama] = [];
+    acc[item.dosenNama][item.kriteriaNama].push(item);
+    return acc;
+  }, {} as Record<string, Record<string, typeof filteredData>>);
+  const toggleDosen = (dosenNama: string) => {
+    setHiddenDosen((prev) => ({ ...prev, [dosenNama]: !prev[dosenNama] }));
+  };
+
+  const toggleKriteria = (dosenNama: string, kriteriaNama: string) => {
+    setHiddenKriteria((prev) => ({
+      ...prev,
+      [dosenNama]: {
+        ...(prev[dosenNama] || {}),
+        [kriteriaNama]: !prev[dosenNama]?.[kriteriaNama],
+      },
+    }));
+  };
 
   return (
     <div className="w-full min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 p-6">
@@ -122,13 +172,31 @@ const PenilaianPage = () => {
             className="gap-2"
             onClick={() => {
               // Export filtered data to CSV
-              const headers = ["Nama Dosen", "Subkriteria", "Nilai"];
+              const headers = [
+                "Nama Dosen",
+                "Kriteria",
+                "Subkriteria",
+                "Nilai",
+              ];
               const rows: string[][] = [];
-              Object.entries(groupedData).forEach(([dosenNama, items]) => {
-                items.forEach((item) => {
-                  rows.push([dosenNama, item.subkriteriaNama, item.nilai.toString()]);
-                });
-              });
+
+              Object.entries(groupedData).forEach(
+                ([dosenNama, kriteriaGroup]) => {
+                  Object.entries(kriteriaGroup).forEach(
+                    ([kriteriaNama, itemList]) => {
+                      itemList.forEach((item) => {
+                        rows.push([
+                          dosenNama,
+                          kriteriaNama,
+                          item.subkriteriaNama,
+                          item.nilai.toString(),
+                        ]);
+                      });
+                    }
+                  );
+                }
+              );
+
               const csvContent =
                 "data:text/csv;charset=utf-8," +
                 [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
@@ -161,13 +229,21 @@ const PenilaianPage = () => {
                 `;
                 let html = "<h1>Laporan Penilaian</h1>";
                 html += "<table>";
-                html += "<thead><tr><th>Nama Dosen</th><th>Subkriteria</th><th>Nilai</th></tr></thead>";
-                html += "<tbody>";
-                Object.entries(groupedData).forEach(([dosenNama, items]) => {
-                  items.forEach((item) => {
-                    html += `<tr><td>${dosenNama}</td><td>${item.subkriteriaNama}</td><td>${item.nilai}</td></tr>`;
-                  });
-                });
+                html +=
+                  "<thead><tr><th>Nama Dosen</th><th>Kriteria</th><th>Subkriteria</th><th>Nilai</th></tr></thead>";
+
+                Object.entries(groupedData).forEach(
+                  ([dosenNama, kriteriaGroup]) => {
+                    Object.entries(kriteriaGroup).forEach(
+                      ([kriteriaNama, itemList]) => {
+                        itemList.forEach((item) => {
+                          html += `<tr><td>${dosenNama}</td><td>${kriteriaNama}</td><td>${item.subkriteriaNama}</td><td>${item.nilai}</td></tr>`;
+                        });
+                      }
+                    );
+                  }
+                );
+
                 html += "</tbody></table>";
                 printWindow.document.write(style + html);
                 printWindow.document.close();
@@ -196,50 +272,214 @@ const PenilaianPage = () => {
       <div className="rounded-b-xl overflow-hidden border border-t-0 border-gray-200 dark:border-gray-700 shadow-lg">
         <Card>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nama Dosen</TableHead>
-                  <TableHead>Subkriteria</TableHead>
-                  <TableHead>Nilai</TableHead>
-                  <TableHead className="text-center">Aksi</TableHead>
+            <Table className="border-2 ">
+              <TableHeader className="border-2 ">
+                <TableRow className="border-2 ">
+                  <TableHead className="border-2 ">Nama Dosen</TableHead>
+                  <TableHead className="border-2 ">Kriteria</TableHead>
+                  <TableHead className="border-2 ">Subkriteria</TableHead>
+                  <TableHead className="border-2 ">Nilai</TableHead>
+                  <TableHead className="border-2 text-center">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {Object.entries(groupedData).map(([dosenNama, items]) => (
-                  <React.Fragment key={dosenNama}>
-                    <TableRow className="bg-gray-200 dark:bg-gray-700 font-semibold">
-                      <TableCell colSpan={4}>{dosenNama}</TableCell>
-                    </TableRow>
-                    {items.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell></TableCell>
-                        <TableCell>{item.subkriteriaNama}</TableCell>
-                        <TableCell>{item.nilai}</TableCell>
-                        <TableCell className="text-center space-x-2">
-                          {/* <Button
-                            size="sm"
-                            variant="secondary"
-                            className="px-2"
-                            onClick={() => openModal(item.id ?? "default-id", "update")}
+                {Object.entries(groupedData).map(
+                  ([dosenNama, kriteriaGroup]) => (
+                    <React.Fragment key={dosenNama}>
+                      {/* Header Dosen */}
+                      <TableRow className="bg-blue-100 dark:bg-blue-900 font-bold">
+                        <TableCell className="border-2 " colSpan={4}>
+                          <button
+                            onClick={() => toggleDosen(dosenNama)}
+                            className="hover:underline text-left"
                           >
-                            <Edit className="w-4 h-4" />
-                          </Button> */}
+                            {hiddenDosen[dosenNama] ? (
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="w-5 h-5 inline-block mr-1"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <polyline points="6 9 12 15 18 9" />
+                              </svg>
+                            ) : (
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="w-5 h-5 inline-block mr-1"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <polyline points="18 15 12 9 6 15" />
+                              </svg>
+                            )}
+                            {dosenNama}
+                          </button>
+                        </TableCell>
+                        <TableCell className="text-center border-2">
                           <Button
                             size="sm"
                             variant="destructive"
                             className="px-2"
-                            onClick={() => openModal(item.id ?? "default-id", "delete")}
+                            // onClick={() =>
+                            //   openModal(item.id ?? "default-id", "delete")
+                            // }
                           >
                             <Trash className="w-4 h-4" />
                           </Button>
                         </TableCell>
+                        {/* <TableCell className="border-2 text-center" colSpan={1}>
+                          <button
+                            onClick={() => toggleDosen(dosenNama)}
+                            className="hover:underline text-left"
+                          >
+                            {hiddenDosen[dosenNama] ? <PanelLeftClose /> : <PanelBottomClose />}
+                          </button>
+                        </TableCell> */}
                       </TableRow>
-                    ))}
-                  </React.Fragment>
-                ))}
+
+                      {!hiddenDosen[dosenNama] &&
+                        Object.entries(kriteriaGroup).map(
+                          ([kriteriaNama, penilaians]) => (
+                            <React.Fragment key={kriteriaNama}>
+                              <TableRow className="bg-gray-100 dark:bg-gray-800 font-semibold italic">
+                                <TableCell className="border-2 "></TableCell>
+                                <TableCell className="border-2 " colSpan={3}>
+                                  <button
+                                    onClick={() =>
+                                      toggleKriteria(dosenNama, kriteriaNama)
+                                    }
+                                    className="hover:underline text-left"
+                                  >
+                                    {hiddenKriteria[dosenNama]?.[
+                                      kriteriaNama
+                                    ] ? (
+                                      <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="w-5 h-5 inline-block mr-1"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                      >
+                                        <polyline points="6 9 12 15 18 9" />
+                                      </svg>
+                                    ) : (
+                                      <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="w-5 h-5 inline-block mr-1"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                      >
+                                        <polyline points="18 15 12 9 6 15" />
+                                      </svg>
+                                    )}{" "}
+                                    {kriteriaNama}
+                                  </button>
+                                </TableCell>
+                                <TableCell className="text-center border-2">
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    className="px-2"
+                                    // onClick={() =>
+                                    //   openModal(item.id ?? "default-id", "delete")
+                                    // }
+                                  >
+                                    <Trash className="w-4 h-4" />
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+
+                              {!hiddenKriteria[dosenNama]?.[kriteriaNama] &&
+                                penilaians.map((item) => (
+                                  <TableRow key={item.id}>
+                                    <TableCell className="border-2 "></TableCell>
+                                    <TableCell className="border-2 "></TableCell>
+                                    <TableCell className="break-words whitespace-normal max-w-[150px] border-2">
+                                      {item.subkriteriaNama}
+                                    </TableCell>
+                                    <TableCell className="border-2 ">
+                                      {item.nilai}
+                                    </TableCell>
+                                    <TableCell className="text-center border-2">
+                                      <Button
+                                        size="sm"
+                                        variant="destructive"
+                                        className="px-2"
+                                        onClick={() =>
+                                          openModal(
+                                            item.id ?? "default-id",
+                                            "delete"
+                                          )
+                                        }
+                                      >
+                                        <Trash className="w-4 h-4" />
+                                      </Button>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                            </React.Fragment>
+                          )
+                        )}
+                    </React.Fragment>
+                  )
+                )}
               </TableBody>
             </Table>
+
+            {/* {Object.entries(groupedData).map(([dosenNama, kriteriaGroup]) => (
+              <React.Fragment key={dosenNama}>
+                <TableRow className="bg-gray-200 dark:bg-gray-700 font-semibold">
+                  <TableCell colSpan={4}>{dosenNama}</TableCell>
+                </TableRow>
+
+                {Object.entries(kriteriaGroup).map(
+                  ([kriteriaNama, penilaians]) => (
+                    <React.Fragment key={kriteriaNama}>
+                      <TableRow className="bg-gray-100 dark:bg-gray-800 italic text-sm">
+                        <TableCell colSpan={4} className="pl-6">
+                          {kriteriaNama}
+                        </TableCell>
+                      </TableRow>
+
+                      {penilaians.map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell></TableCell>
+                          <TableCell>{item.subkriteriaNama}</TableCell>
+                          <TableCell>{item.nilai}</TableCell>
+                          <TableCell className="text-center space-x-2">
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              className="px-2"
+                              onClick={() =>
+                                openModal(item.id ?? "default-id", "delete")
+                              }
+                            >
+                              <Trash className="w-4 h-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </React.Fragment>
+                  )
+                )}
+              </React.Fragment>
+            ))} */}
           </CardContent>
         </Card>
       </div>
@@ -256,7 +496,9 @@ const PenilaianPage = () => {
           }
           closeModal();
         }}
-        title={modalAction === "delete" ? "Hapus penilaian?" : "Update penilaian?"}
+        title={
+          modalAction === "delete" ? "Hapus penilaian?" : "Update penilaian?"
+        }
         message={
           modalAction === "delete"
             ? "Apakah Anda yakin ingin menghapus penilaian ini?"
