@@ -3,8 +3,6 @@
 
 @custom-variant dark (&:is(.dark *));
 
-
-
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -119,5 +117,74 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* STYLE FOR PRINT */
+
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible !important;
+  }
+  .print-area {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    box-shadow: none;
+    border: none;
+    border-radius: 0%;
+    /* height: 100%; */
+  }
+
+  .watermark-print {
+    display: block;
+    width: 50%;
+    height: auto;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0.5;
+  }
+  .header-print-area {
+    display: flex;
+    /* margin-top: 5%; */
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    background-color: transparent !important;
+    background: transparent !important;
+  }
+
+  th,
+  td {
+    padding: 6px;
+    font-size: 12px;
+  }
+  th,
+  td,
+  tr,
+  .table-row,
+  .table-cell {
+    border: 1px solid #000;
+    background-color: transparent !important;
+    background: none !important;
+  }
+
+  caption {
+    caption-side: top;
+    text-align: center;
+    font-weight: bold;
+    font-size: 14px;
+    margin-bottom: 8px;
   }
 }

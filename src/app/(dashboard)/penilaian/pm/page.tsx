@@ -9,6 +9,14 @@ import { getAllKriteria } from "@/lib/firestore/kriteria";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface DosenWithGap {
   id: string;
@@ -33,7 +41,11 @@ const ProfileMatchingCalculation = () => {
   const [kriteriaList, setKriteriaList] = useState<Kriteria[]>([]);
   const [hasProcessed, setHasProcessed] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
+  const [selectedDosen, setSelectedDosen] = useState<DosenWithGap | null>(null);
 
+  const [subkriteriaList, setSubkriteriaList] = useState<any[]>([]);
+
+  const [showModal, setShowModal] = useState(false);
   useEffect(() => {
     const fetchKriteria = async () => {
       const data = await getAllKriteria();
@@ -52,16 +64,6 @@ const ProfileMatchingCalculation = () => {
     setKriteriaList(updated);
   };
   const totalBobot = kriteriaList.reduce((sum, item) => sum + item.bobot, 0);
-
-  const handleSubmit = () => {
-    if (totalBobot !== 100) {
-      alert("Total bobot harus 100%");
-      return;
-    }
-
-    console.log("Data bobot yang akan dipakai:", kriteriaList);
-    // bisa diproses ke mana pun (perhitungan, penyimpanan ke tabel lain, dst)
-  };
 
   const handleProcess = async () => {
     if (totalBobot !== 100) {
@@ -136,7 +138,8 @@ const ProfileMatchingCalculation = () => {
           return count;
         }, 0);
         const totalCoreT = core > 0 ? sumCoreDosen / core : 0;
-        const totalSecondaryT = secondary > 0 ? sumSecondaryDosen / secondary : 0;
+        const totalSecondaryT =
+          secondary > 0 ? sumSecondaryDosen / secondary : 0;
         let totalPerKriteria =
           (k.persentaseCore / 100) * totalCoreT +
           (k.persentaseSecondary / 100) * totalSecondaryT;
@@ -148,6 +151,7 @@ const ProfileMatchingCalculation = () => {
     setDosenList(Object.values(groupedByDosen));
     setLoadingProcessPm(false);
     setHasProcessed(true); // proses selesai
+    setSubkriteriaList(subkriteria);
   };
 
   const exportToCsv = () => {
@@ -172,15 +176,8 @@ const ProfileMatchingCalculation = () => {
   };
 
   const printReport = () => {
-    if (!resultsRef.current) return;
-    const printContents = resultsRef.current.innerHTML;
-    const originalContents = document.body.innerHTML;
-    document.body.innerHTML = printContents;
-    window.print();
-    document.body.innerHTML = originalContents;
-    window.location.reload();
+    window.print(); // ✅ langsung panggil native dialog
   };
-
   return (
     <div className="p-6 space-y-4">
       <div>
@@ -264,30 +261,53 @@ const ProfileMatchingCalculation = () => {
         </div>
       ) : (
         <>
-          <div ref={resultsRef} className="overflow-x-auto">
-            <table className="min-w-full border border-gray-300 dark:border-gray-700 text-left text-sm font-light">
-              <thead className="border-b border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 font-semibold text-gray-700 dark:text-gray-300">
-                <tr>
-                  <th className="px-4 py-2 border-r border-gray-300 dark:border-gray-700">No</th>
-                  <th className="px-4 py-2 border-r border-gray-300 dark:border-gray-700">Nama Dosen</th>
-                  <th className="px-4 py-2">Total Nilai</th>
-                </tr>
-              </thead>
-              <tbody>
+          <div ref={resultsRef} className="print-area overflow-x-auto">
+            <img
+              src="/img/adzkia.png"
+              alt=""
+              className="watermark-print  hidden"
+            />
+            {/* HEADER */}
+            <div className="header-print-area flex-col justify-center items-center mb-5 hidden ">
+              <span className="text-xl font-semibold">
+                LAPORAN INFORMASI DOSEN
+              </span>
+              <span className="text-xl font-semibold">UNIVERSITAS ADZKIA</span>
+            </div>
+            <Table className="border-collapse">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>No</TableHead>
+                  <TableHead>Nama Dosen</TableHead>
+                  <TableHead>Total Nilai</TableHead>
+                  <TableHead className="print:hidden">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {dosenList
                   .sort((a, b) => b.total - a.total)
                   .map((d, i) => (
-                    <tr
-                      key={d.id}
-                      className="border-b border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900"
-                    >
-                      <td className="px-4 py-2 border-r border-gray-300 dark:border-gray-700">{i + 1}</td>
-                      <td className="px-4 py-2 border-r border-gray-300 dark:border-gray-700">{d.nama}</td>
-                      <td className="px-4 py-2">{d.total.toFixed(2)}</td>
-                    </tr>
+                    <TableRow key={d.id}>
+                      <TableCell>{i + 1}</TableCell>
+                      <TableCell>{d.nama}</TableCell>
+                      <TableCell>{d.total.toFixed(2)}</TableCell>
+                      <TableCell className="print:hidden">
+                       <Button
+  size="sm"
+  variant="outline"
+  onClick={() => {
+    setSelectedDosen(d); // set full object DosenWithGap
+    setShowModal(true);
+  }}
+>
+  DETAIL
+</Button>
+
+                      </TableCell>
+                    </TableRow>
                   ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
           <div className="flex space-x-4 mt-4">
             <Button onClick={exportToCsv} disabled={!hasProcessed}>
@@ -299,6 +319,112 @@ const ProfileMatchingCalculation = () => {
           </div>
         </>
       )}
+     {showModal && selectedDosen && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div className="bg-white dark:bg-gray-900 p-6 rounded-xl max-w-3xl w-full overflow-y-auto max-h-[90vh] shadow-lg relative">
+      <button
+        onClick={() => setShowModal(false)}
+        className="absolute top-2 right-3 text-gray-500 hover:text-red-600"
+      >
+        ✖
+      </button>
+      <h2 className="text-xl font-bold mb-4">
+        Detail Penilaian: {selectedDosen.nama}
+      </h2>
+
+      <div className="space-y-4 text-sm">
+        {kriteriaList.map((kriteria) => {
+          const relatedSubs = subkriteriaList.filter(
+            (s) => s.kriteriaId === kriteria.id
+          );
+
+          const core = relatedSubs.filter((s) => s.tipe === "Core");
+          const secondary = relatedSubs.filter((s) => s.tipe === "Secondary");
+
+          const avgCore =
+            core.length > 0
+              ? core.reduce(
+                  (sum, s) => sum + (selectedDosen.bobot[s.id] ?? 0),
+                  0
+                ) / core.length
+              : 0;
+
+          const avgSec =
+            secondary.length > 0
+              ? secondary.reduce(
+                  (sum, s) => sum + (selectedDosen.bobot[s.id] ?? 0),
+                  0
+                ) / secondary.length
+              : 0;
+
+          const totalKriteria =
+            (kriteria.persentaseCore / 100) * avgCore +
+            (kriteria.persentaseSecondary / 100) * avgSec;
+
+          const totalAkhir = totalKriteria * (kriteria.bobot / 100);
+
+          return (
+            <div key={kriteria.id} className="border-b pb-4">
+              <h3 className="font-semibold text-blue-600 mb-2">
+                {kriteria.kriteria}
+              </h3>
+
+              <table className="w-full text-xs mb-2 border border-gray-300 dark:border-gray-700">
+                <thead className="bg-gray-100 dark:bg-gray-800">
+                  <tr>
+                    <th className="border px-2">Subkriteria</th>
+                    <th className="border px-2">Nilai</th>
+                    <th className="border px-2">Target</th>
+                    <th className="border px-2">Gap</th>
+                    <th className="border px-2">Bobot</th>
+                    <th className="border px-2">Tipe</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {relatedSubs.map((sub) => (
+                    <tr key={sub.id}>
+                      <td className="border px-2">{sub.subkriteria}</td>
+                      <td className="border px-2">
+                        {selectedDosen.nilai[sub.id] ?? "-"}
+                      </td>
+                      <td className="border px-2">{sub.nilaiTarget}</td>
+                      <td className="border px-2">
+                        {selectedDosen.gap[sub.id] ?? "-"}
+                      </td>
+                      <td className="border px-2">
+                        {selectedDosen.bobot[sub.id]?.toFixed(2) ?? "-"}
+                      </td>
+                      <td className="border px-2">{sub.tipe}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <p className="text-xs">
+                <strong>Rata-rata Core:</strong> {avgCore.toFixed(2)} |{" "}
+                <strong>Rata-rata Secondary:</strong> {avgSec.toFixed(2)}
+              </p>
+              <p className="text-xs">
+                <strong>Total Kriteria:</strong> {totalKriteria.toFixed(2)} x{" "}
+                <strong>Bobot:</strong> {kriteria.bobot}% ={" "}
+                <strong className="text-green-600">
+                  {totalAkhir.toFixed(2)}
+                </strong>
+              </p>
+            </div>
+          );
+        })}
+        <div className="mt-6 text-right font-semibold text-lg">
+          TOTAL NILAI AKHIR:{" "}
+          <span className="text-blue-600">
+            {selectedDosen.total.toFixed(2)}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   );
 };

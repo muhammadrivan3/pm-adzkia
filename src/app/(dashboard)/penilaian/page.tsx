@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { deletePenilaian, getAllPenilaian } from "@/lib/firestore/penilaian";
 import { getAllDosen } from "@/lib/firestore/dosen";
 import { getAllSubkriteria } from "@/lib/firestore/sub-kriteria";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -17,8 +16,6 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import {
   Cpu,
-  PanelBottomClose,
-  PanelLeftClose,
   Plus,
   Trash,
 } from "lucide-react";
@@ -45,6 +42,8 @@ const PenilaianPage = () => {
   const [penilaianIdToAction, setPenilaianIdToAction] = useState<
     string | null
   >();
+
+  const printAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -128,13 +127,27 @@ const PenilaianPage = () => {
     Record<string, Record<string, boolean>>
   >({});
 
-  const groupedData = filteredData.reduce((acc, item) => {
+  // With Memo
+  const groupedData = useMemo(() =>{
+    return filteredData.reduce((acc, item) =>
+      {
     if (!acc[item.dosenNama]) acc[item.dosenNama] = {};
     if (!acc[item.dosenNama][item.kriteriaNama])
       acc[item.dosenNama][item.kriteriaNama] = [];
     acc[item.dosenNama][item.kriteriaNama].push(item);
     return acc;
-  }, {} as Record<string, Record<string, typeof filteredData>>);
+  }, {} as Record<string, Record<string, typeof filteredData>>)
+  }, [filteredData]);
+
+  // Without memo
+  // const groupedData = filteredData.reduce((acc, item) => {
+  //   if (!acc[item.dosenNama]) acc[item.dosenNama] = {};
+  //   if (!acc[item.dosenNama][item.kriteriaNama])
+  //     acc[item.dosenNama][item.kriteriaNama] = [];
+  //   acc[item.dosenNama][item.kriteriaNama].push(item);
+  //   return acc;
+  // }, {} as Record<string, Record<string, typeof filteredData>>);
+
   const toggleDosen = (dosenNama: string) => {
     setHiddenDosen((prev) => ({ ...prev, [dosenNama]: !prev[dosenNama] }));
   };
@@ -148,7 +161,9 @@ const PenilaianPage = () => {
       },
     }));
   };
-
+  const printReport = () => {
+    window.print(); // ✅ langsung panggil native dialog
+  };
   return (
     <div className="w-full min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 p-6">
       <div className="flex items-center justify-between mb-6">
@@ -212,47 +227,7 @@ const PenilaianPage = () => {
             Export
           </Button>
 
-          <Button
-            className="gap-2"
-            onClick={() => {
-              // Print filtered data
-              const printWindow = window.open("", "_blank");
-              if (printWindow) {
-                const style = `
-                  <style>
-                    body { font-family: Arial, sans-serif; padding: 20px; }
-                    table { border-collapse: collapse; width: 100%; }
-                    th, td { border: 1px solid #ddd; padding: 8px; }
-                    th { background-color: #f2f2f2; }
-                    h1 { text-align: center; }
-                  </style>
-                `;
-                let html = "<h1>Laporan Penilaian</h1>";
-                html += "<table>";
-                html +=
-                  "<thead><tr><th>Nama Dosen</th><th>Kriteria</th><th>Subkriteria</th><th>Nilai</th></tr></thead>";
-
-                Object.entries(groupedData).forEach(
-                  ([dosenNama, kriteriaGroup]) => {
-                    Object.entries(kriteriaGroup).forEach(
-                      ([kriteriaNama, itemList]) => {
-                        itemList.forEach((item) => {
-                          html += `<tr><td>${dosenNama}</td><td>${kriteriaNama}</td><td>${item.subkriteriaNama}</td><td>${item.nilai}</td></tr>`;
-                        });
-                      }
-                    );
-                  }
-                );
-
-                html += "</tbody></table>";
-                printWindow.document.write(style + html);
-                printWindow.document.close();
-                printWindow.focus();
-                printWindow.print();
-                printWindow.close();
-              }
-            }}
-          >
+          <Button className="gap-2" onClick={printReport}>
             Print
           </Button>
         </div>
@@ -269,219 +244,175 @@ const PenilaianPage = () => {
         />
       </div>
 
-      <div className="rounded-b-xl overflow-hidden border border-t-0 border-gray-200 dark:border-gray-700 shadow-lg">
-        <Card>
-          <CardContent>
-            <Table className="border-2 ">
-              <TableHeader className="border-2 ">
-                <TableRow className="border-2 ">
-                  <TableHead className="border-2 ">Nama Dosen</TableHead>
-                  <TableHead className="border-2 ">Kriteria</TableHead>
-                  <TableHead className="border-2 ">Subkriteria</TableHead>
-                  <TableHead className="border-2 ">Nilai</TableHead>
-                  <TableHead className="border-2 text-center">Aksi</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {Object.entries(groupedData).map(
-                  ([dosenNama, kriteriaGroup]) => (
-                    <React.Fragment key={dosenNama}>
-                      {/* Header Dosen */}
-                      <TableRow className="bg-blue-100 dark:bg-blue-900 font-bold">
-                        <TableCell className="border-2 " colSpan={4}>
-                          <button
-                            onClick={() => toggleDosen(dosenNama)}
-                            className="hover:underline text-left"
-                          >
-                            {hiddenDosen[dosenNama] ? (
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="w-5 h-5 inline-block mr-1"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
-                                <polyline points="6 9 12 15 18 9" />
-                              </svg>
-                            ) : (
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="w-5 h-5 inline-block mr-1"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
-                                <polyline points="18 15 12 9 6 15" />
-                              </svg>
-                            )}
-                            {dosenNama}
-                          </button>
-                        </TableCell>
-                        <TableCell className="text-center border-2">
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            className="px-2"
-                            // onClick={() =>
-                            //   openModal(item.id ?? "default-id", "delete")
-                            // }
-                          >
-                            <Trash className="w-4 h-4" />
-                          </Button>
-                        </TableCell>
-                        {/* <TableCell className="border-2 text-center" colSpan={1}>
-                          <button
-                            onClick={() => toggleDosen(dosenNama)}
-                            className="hover:underline text-left"
-                          >
-                            {hiddenDosen[dosenNama] ? <PanelLeftClose /> : <PanelBottomClose />}
-                          </button>
-                        </TableCell> */}
-                      </TableRow>
-
-                      {!hiddenDosen[dosenNama] &&
-                        Object.entries(kriteriaGroup).map(
-                          ([kriteriaNama, penilaians]) => (
-                            <React.Fragment key={kriteriaNama}>
-                              <TableRow className="bg-gray-100 dark:bg-gray-800 font-semibold italic">
-                                <TableCell className="border-2 "></TableCell>
-                                <TableCell className="border-2 " colSpan={3}>
-                                  <button
-                                    onClick={() =>
-                                      toggleKriteria(dosenNama, kriteriaNama)
-                                    }
-                                    className="hover:underline text-left"
-                                  >
-                                    {hiddenKriteria[dosenNama]?.[
-                                      kriteriaNama
-                                    ] ? (
-                                      <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        className="w-5 h-5 inline-block mr-1"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                      >
-                                        <polyline points="6 9 12 15 18 9" />
-                                      </svg>
-                                    ) : (
-                                      <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        className="w-5 h-5 inline-block mr-1"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                      >
-                                        <polyline points="18 15 12 9 6 15" />
-                                      </svg>
-                                    )}{" "}
-                                    {kriteriaNama}
-                                  </button>
-                                </TableCell>
-                                <TableCell className="text-center border-2">
-                                  <Button
-                                    size="sm"
-                                    variant="destructive"
-                                    className="px-2"
-                                    // onClick={() =>
-                                    //   openModal(item.id ?? "default-id", "delete")
-                                    // }
-                                  >
-                                    <Trash className="w-4 h-4" />
-                                  </Button>
-                                </TableCell>
-                              </TableRow>
-
-                              {!hiddenKriteria[dosenNama]?.[kriteriaNama] &&
-                                penilaians.map((item) => (
-                                  <TableRow key={item.id}>
-                                    <TableCell className="border-2 "></TableCell>
-                                    <TableCell className="border-2 "></TableCell>
-                                    <TableCell className="break-words whitespace-normal max-w-[150px] border-2">
-                                      {item.subkriteriaNama}
-                                    </TableCell>
-                                    <TableCell className="border-2 ">
-                                      {item.nilai}
-                                    </TableCell>
-                                    <TableCell className="text-center border-2">
-                                      <Button
-                                        size="sm"
-                                        variant="destructive"
-                                        className="px-2"
-                                        onClick={() =>
-                                          openModal(
-                                            item.id ?? "default-id",
-                                            "delete"
-                                          )
-                                        }
-                                      >
-                                        <Trash className="w-4 h-4" />
-                                      </Button>
-                                    </TableCell>
-                                  </TableRow>
-                                ))}
-                            </React.Fragment>
-                          )
-                        )}
-                    </React.Fragment>
-                  )
-                )}
-              </TableBody>
-            </Table>
-
-            {/* {Object.entries(groupedData).map(([dosenNama, kriteriaGroup]) => (
+      <div
+        ref={printAreaRef}
+        className="print-area relative rounded-b-xl overflow-hidden border border-gray-300 dark:border-gray-700 "
+      >
+        <img
+          src="/img/adzkia.png"
+          alt=""
+          className="watermark-print  hidden"
+        />
+        {/* HEADER */}
+        <div className="header-print-area flex-col justify-center items-center mb-5 hidden ">
+          <span className="text-xl font-semibold">LAPORAN INFORMASI DOSEN</span>
+          <span className="text-xl font-semibold">UNIVERSITAS ADZKIA</span>
+        </div>
+        <Table >
+          <TableHeader >
+            <TableRow >
+              <TableHead >Nama Dosen</TableHead>
+              <TableHead >Kriteria</TableHead>
+              <TableHead >Subkriteria</TableHead>
+              <TableHead >Nilai</TableHead>
+              <TableHead className="text-center print:hidden">
+                Aksi
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Object.entries(groupedData).map(([dosenNama, kriteriaGroup]) => (
               <React.Fragment key={dosenNama}>
-                <TableRow className="bg-gray-200 dark:bg-gray-700 font-semibold">
-                  <TableCell colSpan={4}>{dosenNama}</TableCell>
+                {/* Header Dosen */}
+                <TableRow className="bg-blue-100 dark:bg-blue-900 font-bold">
+                  <TableCell  colSpan={4}>
+                    <button
+                      onClick={() => toggleDosen(dosenNama)}
+                      className="hover:underline text-left"
+                    >
+                      {hiddenDosen[dosenNama] ? (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="w-5 h-5 inline-block mr-1 print:hidden"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                      ) : (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="w-5 h-5 inline-block mr-1 print:hidden"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="18 15 12 9 6 15" />
+                        </svg>
+                      )}
+                      {dosenNama}
+                    </button>
+                  </TableCell>
+                  <TableCell className="text-center border-2 print:hidden">
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="px-2"
+                      // onClick={() =>
+                      //   openModal(item.id ?? "default-id", "delete")
+                      // }
+                    >
+                      <Trash className="w-4 h-4" />
+                    </Button>
+                  </TableCell>
                 </TableRow>
 
-                {Object.entries(kriteriaGroup).map(
-                  ([kriteriaNama, penilaians]) => (
-                    <React.Fragment key={kriteriaNama}>
-                      <TableRow className="bg-gray-100 dark:bg-gray-800 italic text-sm">
-                        <TableCell colSpan={4} className="pl-6">
-                          {kriteriaNama}
-                        </TableCell>
-                      </TableRow>
-
-                      {penilaians.map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell></TableCell>
-                          <TableCell>{item.subkriteriaNama}</TableCell>
-                          <TableCell>{item.nilai}</TableCell>
-                          <TableCell className="text-center space-x-2">
+                {!hiddenDosen[dosenNama] &&
+                  Object.entries(kriteriaGroup).map(
+                    ([kriteriaNama, penilaians]) => (
+                      <React.Fragment key={kriteriaNama}>
+                        <TableRow className="bg-gray-100 dark:bg-gray-800 font-semibold italic print:bg-none">
+                          <TableCell ></TableCell>
+                          <TableCell  colSpan={3}>
+                            <button
+                              onClick={() =>
+                                toggleKriteria(dosenNama, kriteriaNama)
+                              }
+                              className="hover:underline text-left"
+                            >
+                              {hiddenKriteria[dosenNama]?.[kriteriaNama] ? (
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="w-5 h-5 inline-block mr-1 print:hidden"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <polyline points="6 9 12 15 18 9" />
+                                </svg>
+                              ) : (
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="w-5 h-5 inline-block mr-1 print:hidden"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <polyline points="18 15 12 9 6 15" />
+                                </svg>
+                              )}{" "}
+                              {kriteriaNama}
+                            </button>
+                          </TableCell>
+                          <TableCell className="text-center border-2 print:hidden">
                             <Button
                               size="sm"
                               variant="destructive"
                               className="px-2"
-                              onClick={() =>
-                                openModal(item.id ?? "default-id", "delete")
-                              }
+                              // onClick={() =>
+                              //   openModal(item.id ?? "default-id", "delete")
+                              // }
                             >
                               <Trash className="w-4 h-4" />
                             </Button>
                           </TableCell>
                         </TableRow>
-                      ))}
-                    </React.Fragment>
-                  )
-                )}
+
+                        {!hiddenKriteria[dosenNama]?.[kriteriaNama] &&
+                          penilaians.map((item) => (
+                            <TableRow key={item.id}>
+                              <TableCell ></TableCell>
+                              <TableCell ></TableCell>
+                              <TableCell className="break-words whitespace-normal max-w-[150px] border-2">
+                                {item.subkriteriaNama}
+                              </TableCell>
+                              <TableCell className="border-2 text-center">
+                                {item.nilai}
+                              </TableCell>
+                              <TableCell className="text-center border-2 print:hidden">
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  className="px-2"
+                                  onClick={() =>
+                                    openModal(item.id ?? "default-id", "delete")
+                                  }
+                                >
+                                  <Trash className="w-4 h-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                      </React.Fragment>
+                    )
+                  )}
               </React.Fragment>
-            ))} */}
-          </CardContent>
-        </Card>
+            ))}
+          </TableBody>
+        </Table>
       </div>
 
       {/* Modal Action */}

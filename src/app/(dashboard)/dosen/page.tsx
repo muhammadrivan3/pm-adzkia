@@ -4,14 +4,13 @@ import React, { useEffect, useState, useRef } from "react";
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Edit, FileDown, Plus, Printer, Trash } from "lucide-react"; // Mengambil data dari Firestore
+import { Edit, FileDown, Plus, Printer, Trash } from "lucide-react";
 import { deleteDosen, getAllDosen } from "@/lib/firestore/dosen";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -22,19 +21,17 @@ const DosenPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const resultsRef = useRef<HTMLDivElement>(null);
+  const printAreaRef = useRef<HTMLDivElement>(null);
 
-  // Ambil data dosen dari Firestore
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const dosen = await getAllDosen(); // Mengambil data dosen atau user lainnya
+        const dosen = await getAllDosen();
         setDosenData(dosen);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
     };
-
     fetchData();
   }, []);
 
@@ -44,74 +41,45 @@ const DosenPage = () => {
 
   const handleDelete = async (id: string) => {
     if (id) {
-      await deleteDosen(id); // Delete user from Firestore
-      setDosenData((prevUsers) => prevUsers.filter((dosen) => dosen.id !== id)); // Update state after deletion
+      await deleteDosen(id);
+      setDosenData((prev) => prev.filter((d) => d.id !== id));
     }
   };
 
-  // Filter and search dosen
   const filteredDosen = dosenData.filter((dosen) => {
-    const matchesSearch =
-      (dosen.name?.toLowerCase().includes(searchQuery.toLowerCase()) ??
-        false) ||
-      (dosen.email?.toLowerCase().includes(searchQuery.toLowerCase()) ??
-        false) ||
-      (dosen.role?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
-
-    const matchesRole = roleFilter ? dosen.role === roleFilter : true;
-    const matchesStatus = statusFilter ? dosen.status === statusFilter : true;
-
-    return matchesSearch && matchesRole && matchesStatus;
+    const q = searchQuery.toLowerCase();
+    const matchSearch =
+      dosen.name?.toLowerCase().includes(q) ||
+      dosen.email?.toLowerCase().includes(q) ||
+      dosen.role?.toLowerCase().includes(q);
+    const matchRole = roleFilter ? dosen.role === roleFilter : true;
+    const matchStatus = statusFilter ? dosen.status === statusFilter : true;
+    return matchSearch && matchRole && matchStatus;
   });
 
   const exportToCsv = () => {
-    if (!filteredDosen.length) {
-      alert("Tidak ada data untuk diekspor.");
-      return;
-    }
-    const headers = [
-      "Nama",
-      "Email",
-      "Role",
-      "Jurusan",
-      "Mata Kuliah",
-      "No. Hp",
-      "Status",
-    ];
-    const rows = filteredDosen.map((dosen) => [
-      dosen.name,
-      dosen.email,
-      dosen.role,
-      dosen.department,
-      dosen.subjects,
-      dosen.phone,
-      dosen.status,
+    if (!filteredDosen.length) return alert("Tidak ada data untuk diekspor.");
+    const headers = ["Nama", "Email", "Role", "Jurusan", "Mata Kuliah", "No. Hp", "Status"];
+    const rows = filteredDosen.map((d) => [
+      d.name, d.email, d.role, d.department, d.subjects, d.phone, d.status,
     ]);
-    const csvContent =
-      "data:text/csv;charset=utf-8," +
-      [headers, ...rows].map((e) => e.join(",")).join("\n");
-    const encodedUri = encodeURI(csvContent);
+    const content = "data:text/csv;charset=utf-8," + [headers, ...rows].map((e) => e.join(",")).join("\n");
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "dosen_report.csv");
+    link.href = encodeURI(content);
+    link.download = "dosen_report.csv";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
   const printReport = () => {
-    if (!resultsRef.current) return;
-    const printContents = resultsRef.current.innerHTML;
-    const originalContents = document.body.innerHTML;
-    document.body.innerHTML = printContents;
-    window.print();
-    document.body.innerHTML = originalContents;
-    window.location.reload();
+    window.print(); // ✅ langsung panggil native dialog
   };
 
   return (
     <div className="w-full min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 p-6">
-      <div className="flex items-center justify-between mb-6">
+      {/* No-print Area */}
+      <div className="no-print flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold font-serif border-b-2 pb-1 border-blue-500">
           Manajemen Dosen
         </h1>
@@ -121,69 +89,53 @@ const DosenPage = () => {
               <Plus className="w-4 h-4" /> Tambah Dosen
             </Link>
           </Button>
-          <Button
-            onClick={exportToCsv}
-            disabled={filteredDosen.length === 0}
-            className="flex items-center space-x-2"
-          >
+          <Button onClick={exportToCsv} disabled={!filteredDosen.length}>
             <FileDown className="w-4 h-4" />
-            {/* <span>Export</span> */}
           </Button>
-          <Button
-            onClick={printReport}
-            disabled={filteredDosen.length === 0}
-            className="flex items-center space-x-2"
-          >
+          <Button onClick={printReport} disabled={!filteredDosen.length}>
             <Printer className="w-4 h-4" />
-            {/* <span>Print</span> */}
           </Button>
         </div>
       </div>
-      {/* Search and filter inputs */}
-      <div className="flex flex-wrap gap-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-t-xl border border-b-0 border-gray-200 dark:border-gray-700">
+
+      {/* Filter - No print */}
+      <div className="no-print flex flex-wrap gap-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-t-xl border border-b-0 border-gray-300 dark:border-gray-700">
         <input
           type="text"
           placeholder="Cari dosen..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 flex-grow min-w-[200px]"
+          className="px-3 py-2 rounded-md border bg-white dark:bg-gray-700 flex-grow min-w-[200px]"
         />
-        <select
-          value={roleFilter}
-          onChange={(e) => setRoleFilter(e.target.value)}
-          className="px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
+        <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className="px-3 py-2 rounded-md border bg-white dark:bg-gray-700">
           <option value="">Semua Role</option>
           <option value="dosen">Dosen</option>
-          <option value="asdos">Asisten Dosen</option>
-          <option value="staff">Staff TU</option>
-          <option value="keuangan">Staff Keuangan</option>
-          <option value="it">Staff IT</option>
-          <option value="perpustakaan">Pustakawan</option>
-          <option value="kemahasiswaan">Bagian Kemahasiswaan</option>
-          <option value="security">Security</option>
-          <option value="laboran">Teknisi Lab</option>
-          <option value="humas">Humas</option>
-          {/* Add other roles as needed */}
+          {/* dst */}
         </select>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2 rounded-md border bg-white dark:bg-gray-700">
           <option value="">Semua Status</option>
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
-          {/* Add other statuses as needed */}
         </select>
       </div>
-      {/* Table for displaying the dosen */}
+
+      {/* Print Area */}
       <div
-        ref={resultsRef}
-        className="rounded-b-xl overflow-hidden border border-t-0 border-gray-200 dark:border-gray-700 shadow-lg"
+        ref={printAreaRef}
+        className="print-area relative rounded-b-xl overflow-hidden border border-gray-300 dark:border-gray-700 "
       >
+        <img
+          src="/img/adzkia.png"
+          alt=""
+          className="watermark-print  hidden"
+        />
+        {/* HEADER */}
+        <div className="header-print-area flex-col justify-center items-center mb-5 hidden" >
+          <span className="text-xl font-semibold">LAPORAN INFORMASI DOSEN</span>
+          <span className="text-xl font-semibold">UNIVERSITAS ADZKIA</span>
+        </div>
         <Table className="w-full">
-          <TableCaption>Daftar Dosen Terdaftar</TableCaption>
+          {/* <TableCaption>Daftar Dosen Terdaftar ok</TableCaption> */}
           <TableHeader>
             <TableRow>
               <TableHead>Nama</TableHead>
@@ -193,7 +145,7 @@ const DosenPage = () => {
               <TableHead>Mata Kuliah</TableHead>
               <TableHead>No. Hp</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="text-center">Aksi</TableHead>
+              <TableHead className="no-print text-center">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -205,32 +157,12 @@ const DosenPage = () => {
                 <TableCell>{dosen.department}</TableCell>
                 <TableCell>{dosen.subjects}</TableCell>
                 <TableCell>{dosen.phone}</TableCell>
-                <TableCell>
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      dosen.status === "active"
-                        ? "bg-green-200 text-green-800 dark:bg-green-800 dark:text-green-200"
-                        : "bg-red-200 text-red-800 dark:bg-red-800 dark:text-red-200"
-                    }`}
-                  >
-                    {dosen.status}
-                  </span>
-                </TableCell>
-                <TableCell className="text-center space-x-2">
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    className="px-2"
-                    onClick={() => handleEdit(dosen.id)}
-                  >
+                <TableCell>{dosen.status}</TableCell>
+                <TableCell className="no-print text-center space-x-2">
+                  <Button size="sm" variant="secondary" onClick={() => handleEdit(dosen.id)}>
                     <Edit className="w-4 h-4" />
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    className="px-2"
-                    onClick={() => handleDelete(dosen.id)}
-                  >
+                  <Button size="sm" variant="destructive" onClick={() => handleDelete(dosen.id)}>
                     <Trash className="w-4 h-4" />
                   </Button>
                 </TableCell>
@@ -239,14 +171,6 @@ const DosenPage = () => {
           </TableBody>
         </Table>
       </div>
-      {/* <div className="flex space-x-4 mt-4">
-        <Button onClick={exportToCsv} disabled={filteredDosen.length === 0}>
-          Export Report
-        </Button>
-        <Button onClick={printReport} disabled={filteredDosen.length === 0}>
-          Print Report
-        </Button>
-      </div> */}
     </div>
   );
 };
