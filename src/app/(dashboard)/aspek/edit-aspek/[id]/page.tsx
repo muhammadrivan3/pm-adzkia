@@ -5,8 +5,18 @@ import { useParams, useRouter } from "next/navigation";
 import { getKriteriaById, updateKriteria } from "@/lib/firestore/kriteria";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import CustomAlert from "@/components/ui/CustomAlert";
 
 const EditKriteriaPage = () => {
+  const [alert, setAlert] = useState<{
+      type: "success" | "error" | "info" | "warning";
+      message: string;
+      show: boolean;
+    }>({
+      type: "success",
+      message: "",
+      show: false,
+    });
   const router = useRouter();
   const {id} = useParams(); // Ambil ID dari URL (?id=...)
   const [loading, setLoading] = useState(false);
@@ -37,13 +47,21 @@ const EditKriteriaPage = () => {
 
     try {
       if (persentaseCore + persentaseSecondary !== 100) {
-        alert("Total persentase Core dan Secondary harus 100%");
+        setAlert({
+          type: "warning",
+          message: "Total persentase Core dan Secondary harus 100%",
+          show: true,
+        });
         setLoading(false);
         return;
       }
 
       if (persentaseCore <= persentaseSecondary) {
-        alert("Persentase Core harus lebih besar dari Secondary!");
+        setAlert({
+          type: "warning",
+          message: "Persentase Core harus lebih besar dari Secondary!",
+          show: true,
+        });
         setLoading(false);
         return;
       }
@@ -56,7 +74,6 @@ const EditKriteriaPage = () => {
       };
 
       await updateKriteria(id as string, updatedData);
-      // alert("Kriteria berhasil diperbarui!");
       router.push("/aspek"); // redirect ke halaman daftar
     } catch (error) {
       console.error(error);
@@ -119,6 +136,12 @@ const EditKriteriaPage = () => {
           {loading ? "Menyimpan Perubahan..." : "Simpan Perubahan"}
         </Button>
       </form>
+       <CustomAlert
+              type={alert.type}
+              message={alert.message}
+              show={alert.show}
+              onClose={() => setAlert((prev) => ({ ...prev, show: false }))}
+            />
     </div>
   );
 };

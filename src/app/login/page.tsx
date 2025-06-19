@@ -28,7 +28,6 @@ export default function LoginPage() {
         // redirect jika ingin: window.location.href = "/dashboard";
          window.location.href = "/"
       } else {
-        // alert("Login gagal. Email atau password salah.");
         setAlert({
           type: "error",
           message: "Email and password not found",
@@ -37,7 +36,6 @@ export default function LoginPage() {
       }
     } catch (err) {
       console.error(err);
-      // alert("Terjadi kesalahan saat login.");
       setAlert({
         type: "error",
         message: "An error occurred while logging in.",

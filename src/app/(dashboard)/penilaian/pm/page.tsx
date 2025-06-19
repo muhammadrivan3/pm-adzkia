@@ -17,6 +17,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { FileDown, Printer } from "lucide-react";
+import CustomAlert from "@/components/ui/CustomAlert";
 
 interface DosenWithGap {
   id: string;
@@ -35,6 +37,16 @@ interface Kriteria {
   bobot: number;
 }
 const ProfileMatchingCalculation = () => {
+  
+    const [alert, setAlert] = useState<{
+      type: "success" | "error" | "info" | "warning";
+      message: string;
+      show: boolean;
+    }>({
+      type: "success",
+      message: "",
+      show: false,
+    });
   const [dosenList, setDosenList] = useState<DosenWithGap[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingProcessPm, setLoadingProcessPm] = useState(true);
@@ -67,7 +79,11 @@ const ProfileMatchingCalculation = () => {
 
   const handleProcess = async () => {
     if (totalBobot !== 100) {
-      alert("Total bobot harus 100%");
+      setAlert({
+          type: "warning",
+          message: "Total bobot harus 100%",
+          show: true,
+        });
       return;
     }
     setLoadingProcessPm(true);
@@ -156,7 +172,11 @@ const ProfileMatchingCalculation = () => {
 
   const exportToCsv = () => {
     if (!dosenList.length) {
-      alert("Tidak ada data untuk diekspor.");
+      setAlert({
+          type: "warning",
+          message: "Tidak ada data untuk diekspor.",
+          show: true,
+        });
       return;
     }
     const headers = ["No", "Nama Dosen", "Total Nilai"];
@@ -292,17 +312,16 @@ const ProfileMatchingCalculation = () => {
                       <TableCell>{d.nama}</TableCell>
                       <TableCell>{d.total.toFixed(2)}</TableCell>
                       <TableCell className="print:hidden">
-                       <Button
-  size="sm"
-  variant="outline"
-  onClick={() => {
-    setSelectedDosen(d); // set full object DosenWithGap
-    setShowModal(true);
-  }}
->
-  DETAIL
-</Button>
-
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedDosen(d); // set full object DosenWithGap
+                            setShowModal(true);
+                          }}
+                        >
+                          DETAIL
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -311,120 +330,128 @@ const ProfileMatchingCalculation = () => {
           </div>
           <div className="flex space-x-4 mt-4">
             <Button onClick={exportToCsv} disabled={!hasProcessed}>
-              Export Report
+              <FileDown className="w-4 h-4" />
             </Button>
             <Button onClick={printReport} disabled={!hasProcessed}>
-              Print Report
+              <Printer className="w-4 h-4" />
             </Button>
           </div>
         </>
       )}
-     {showModal && selectedDosen && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-    <div className="bg-white dark:bg-gray-900 p-6 rounded-xl max-w-3xl w-full overflow-y-auto max-h-[90vh] shadow-lg relative">
-      <button
-        onClick={() => setShowModal(false)}
-        className="absolute top-2 right-3 text-gray-500 hover:text-red-600"
-      >
-        ✖
-      </button>
-      <h2 className="text-xl font-bold mb-4">
-        Detail Penilaian: {selectedDosen.nama}
-      </h2>
+      {showModal && selectedDosen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white dark:bg-gray-900 p-6 rounded-xl max-w-3xl w-full overflow-y-auto max-h-[90vh] shadow-lg relative">
+            <button
+              onClick={() => setShowModal(false)}
+              className="absolute top-2 right-3 text-gray-500 hover:text-red-600"
+            >
+              ✖
+            </button>
+            <h2 className="text-xl font-bold mb-4">
+              Detail Penilaian: {selectedDosen.nama}
+            </h2>
 
-      <div className="space-y-4 text-sm">
-        {kriteriaList.map((kriteria) => {
-          const relatedSubs = subkriteriaList.filter(
-            (s) => s.kriteriaId === kriteria.id
-          );
+            <div className="space-y-4 text-sm">
+              {kriteriaList.map((kriteria) => {
+                const relatedSubs = subkriteriaList.filter(
+                  (s) => s.kriteriaId === kriteria.id
+                );
 
-          const core = relatedSubs.filter((s) => s.tipe === "Core");
-          const secondary = relatedSubs.filter((s) => s.tipe === "Secondary");
+                const core = relatedSubs.filter((s) => s.tipe === "Core");
+                const secondary = relatedSubs.filter(
+                  (s) => s.tipe === "Secondary"
+                );
 
-          const avgCore =
-            core.length > 0
-              ? core.reduce(
-                  (sum, s) => sum + (selectedDosen.bobot[s.id] ?? 0),
-                  0
-                ) / core.length
-              : 0;
+                const avgCore =
+                  core.length > 0
+                    ? core.reduce(
+                        (sum, s) => sum + (selectedDosen.bobot[s.id] ?? 0),
+                        0
+                      ) / core.length
+                    : 0;
 
-          const avgSec =
-            secondary.length > 0
-              ? secondary.reduce(
-                  (sum, s) => sum + (selectedDosen.bobot[s.id] ?? 0),
-                  0
-                ) / secondary.length
-              : 0;
+                const avgSec =
+                  secondary.length > 0
+                    ? secondary.reduce(
+                        (sum, s) => sum + (selectedDosen.bobot[s.id] ?? 0),
+                        0
+                      ) / secondary.length
+                    : 0;
 
-          const totalKriteria =
-            (kriteria.persentaseCore / 100) * avgCore +
-            (kriteria.persentaseSecondary / 100) * avgSec;
+                const totalKriteria =
+                  (kriteria.persentaseCore / 100) * avgCore +
+                  (kriteria.persentaseSecondary / 100) * avgSec;
 
-          const totalAkhir = totalKriteria * (kriteria.bobot / 100);
+                const totalAkhir = totalKriteria * (kriteria.bobot / 100);
 
-          return (
-            <div key={kriteria.id} className="border-b pb-4">
-              <h3 className="font-semibold text-blue-600 mb-2">
-                {kriteria.kriteria}
-              </h3>
+                return (
+                  <div key={kriteria.id} className="border-b pb-4">
+                    <h3 className="font-semibold text-blue-600 mb-2">
+                      {kriteria.kriteria}
+                    </h3>
 
-              <table className="w-full text-xs mb-2 border border-gray-300 dark:border-gray-700">
-                <thead className="bg-gray-100 dark:bg-gray-800">
-                  <tr>
-                    <th className="border px-2">Subkriteria</th>
-                    <th className="border px-2">Nilai</th>
-                    <th className="border px-2">Target</th>
-                    <th className="border px-2">Gap</th>
-                    <th className="border px-2">Bobot</th>
-                    <th className="border px-2">Tipe</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {relatedSubs.map((sub) => (
-                    <tr key={sub.id}>
-                      <td className="border px-2">{sub.subkriteria}</td>
-                      <td className="border px-2">
-                        {selectedDosen.nilai[sub.id] ?? "-"}
-                      </td>
-                      <td className="border px-2">{sub.nilaiTarget}</td>
-                      <td className="border px-2">
-                        {selectedDosen.gap[sub.id] ?? "-"}
-                      </td>
-                      <td className="border px-2">
-                        {selectedDosen.bobot[sub.id]?.toFixed(2) ?? "-"}
-                      </td>
-                      <td className="border px-2">{sub.tipe}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                    <table className="w-full text-xs mb-2 border border-gray-300 dark:border-gray-700">
+                      <thead className="bg-gray-100 dark:bg-gray-800">
+                        <tr>
+                          <th className="border px-2">Subkriteria</th>
+                          <th className="border px-2">Nilai</th>
+                          <th className="border px-2">Target</th>
+                          <th className="border px-2">Gap</th>
+                          <th className="border px-2">Bobot</th>
+                          <th className="border px-2">Tipe</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {relatedSubs.map((sub) => (
+                          <tr key={sub.id}>
+                            <td className="border px-2">{sub.subkriteria}</td>
+                            <td className="border px-2">
+                              {selectedDosen.nilai[sub.id] ?? "-"}
+                            </td>
+                            <td className="border px-2">{sub.nilaiTarget}</td>
+                            <td className="border px-2">
+                              {selectedDosen.gap[sub.id] ?? "-"}
+                            </td>
+                            <td className="border px-2">
+                              {selectedDosen.bobot[sub.id]?.toFixed(2) ?? "-"}
+                            </td>
+                            <td className="border px-2">{sub.tipe}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
 
-              <p className="text-xs">
-                <strong>Rata-rata Core:</strong> {avgCore.toFixed(2)} |{" "}
-                <strong>Rata-rata Secondary:</strong> {avgSec.toFixed(2)}
-              </p>
-              <p className="text-xs">
-                <strong>Total Kriteria:</strong> {totalKriteria.toFixed(2)} x{" "}
-                <strong>Bobot:</strong> {kriteria.bobot}% ={" "}
-                <strong className="text-green-600">
-                  {totalAkhir.toFixed(2)}
-                </strong>
-              </p>
+                    <p className="text-xs">
+                      <strong>Rata-rata Core:</strong> {avgCore.toFixed(2)} |{" "}
+                      <strong>Rata-rata Secondary:</strong> {avgSec.toFixed(2)}
+                    </p>
+                    <p className="text-xs">
+                      <strong>Total Kriteria:</strong>{" "}
+                      {totalKriteria.toFixed(2)} x <strong>Bobot:</strong>{" "}
+                      {kriteria.bobot}% ={" "}
+                      <strong className="text-green-600">
+                        {totalAkhir.toFixed(2)}
+                      </strong>
+                    </p>
+                  </div>
+                );
+              })}
+              <div className="mt-6 text-right font-semibold text-lg">
+                TOTAL NILAI AKHIR:{" "}
+                <span className="text-blue-600">
+                  {selectedDosen.total.toFixed(2)}
+                </span>
+              </div>
             </div>
-          );
-        })}
-        <div className="mt-6 text-right font-semibold text-lg">
-          TOTAL NILAI AKHIR:{" "}
-          <span className="text-blue-600">
-            {selectedDosen.total.toFixed(2)}
-          </span>
+          </div>
         </div>
-      </div>
-    </div>
-  </div>
-)}
-
+      )}
+      <CustomAlert
+              type={alert.type}
+              message={alert.message}
+              show={alert.show}
+              onClose={() => setAlert((prev) => ({ ...prev, show: false }))}
+            />
     </div>
   );
 };

@@ -14,11 +14,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import {
-  Cpu,
-  Plus,
-  Trash,
-} from "lucide-react";
+import { Cpu, FileDown, Plus, Printer, Trash } from "lucide-react";
 import ActionModal from "@/components/ui/ActionModal";
 import { useRouter } from "next/navigation";
 import { getAllKriteria } from "@/lib/firestore/kriteria";
@@ -128,15 +124,14 @@ const PenilaianPage = () => {
   >({});
 
   // With Memo
-  const groupedData = useMemo(() =>{
-    return filteredData.reduce((acc, item) =>
-      {
-    if (!acc[item.dosenNama]) acc[item.dosenNama] = {};
-    if (!acc[item.dosenNama][item.kriteriaNama])
-      acc[item.dosenNama][item.kriteriaNama] = [];
-    acc[item.dosenNama][item.kriteriaNama].push(item);
-    return acc;
-  }, {} as Record<string, Record<string, typeof filteredData>>)
+  const groupedData = useMemo(() => {
+    return filteredData.reduce((acc, item) => {
+      if (!acc[item.dosenNama]) acc[item.dosenNama] = {};
+      if (!acc[item.dosenNama][item.kriteriaNama])
+        acc[item.dosenNama][item.kriteriaNama] = [];
+      acc[item.dosenNama][item.kriteriaNama].push(item);
+      return acc;
+    }, {} as Record<string, Record<string, typeof filteredData>>);
   }, [filteredData]);
 
   // Without memo
@@ -224,11 +219,11 @@ const PenilaianPage = () => {
               document.body.removeChild(link);
             }}
           >
-            Export
+            <FileDown className="w-4 h-4" />
           </Button>
 
           <Button className="gap-2" onClick={printReport}>
-            Print
+            <Printer className="w-4 h-4" />
           </Button>
         </div>
       </div>
@@ -248,26 +243,20 @@ const PenilaianPage = () => {
         ref={printAreaRef}
         className="print-area relative rounded-b-xl overflow-hidden border border-gray-300 dark:border-gray-700 "
       >
-        <img
-          src="/img/adzkia.png"
-          alt=""
-          className="watermark-print  hidden"
-        />
+        <img src="/img/adzkia.png" alt="" className="watermark-print  hidden" />
         {/* HEADER */}
         <div className="header-print-area flex-col justify-center items-center mb-5 hidden ">
           <span className="text-xl font-semibold">LAPORAN INFORMASI DOSEN</span>
           <span className="text-xl font-semibold">UNIVERSITAS ADZKIA</span>
         </div>
-        <Table >
-          <TableHeader >
-            <TableRow >
-              <TableHead >Nama Dosen</TableHead>
-              <TableHead >Kriteria</TableHead>
-              <TableHead >Subkriteria</TableHead>
-              <TableHead >Nilai</TableHead>
-              <TableHead className="text-center print:hidden">
-                Aksi
-              </TableHead>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nama Dosen</TableHead>
+              <TableHead>Kriteria</TableHead>
+              <TableHead>Subkriteria</TableHead>
+              <TableHead>Nilai</TableHead>
+              <TableHead className="text-center print:hidden">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -275,7 +264,7 @@ const PenilaianPage = () => {
               <React.Fragment key={dosenNama}>
                 {/* Header Dosen */}
                 <TableRow className="bg-blue-100 dark:bg-blue-900 font-bold">
-                  <TableCell  colSpan={4}>
+                  <TableCell colSpan={4}>
                     <button
                       onClick={() => toggleDosen(dosenNama)}
                       className="hover:underline text-left"
@@ -329,8 +318,8 @@ const PenilaianPage = () => {
                     ([kriteriaNama, penilaians]) => (
                       <React.Fragment key={kriteriaNama}>
                         <TableRow className="bg-gray-100 dark:bg-gray-800 font-semibold italic print:bg-none">
-                          <TableCell ></TableCell>
-                          <TableCell  colSpan={3}>
+                          <TableCell></TableCell>
+                          <TableCell colSpan={3}>
                             <button
                               onClick={() =>
                                 toggleKriteria(dosenNama, kriteriaNama)
@@ -384,8 +373,8 @@ const PenilaianPage = () => {
                         {!hiddenKriteria[dosenNama]?.[kriteriaNama] &&
                           penilaians.map((item) => (
                             <TableRow key={item.id}>
-                              <TableCell ></TableCell>
-                              <TableCell ></TableCell>
+                              <TableCell></TableCell>
+                              <TableCell></TableCell>
                               <TableCell className="break-words whitespace-normal max-w-[150px] border-2">
                                 {item.subkriteriaNama}
                               </TableCell>

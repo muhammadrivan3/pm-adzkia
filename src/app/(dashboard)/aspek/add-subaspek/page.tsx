@@ -13,10 +13,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-// import { ToastContainer, toast } from "react-toastify";
-// import "react-toastify/dist/ReactToastify.css";
+import CustomAlert from "@/components/ui/CustomAlert";
 
 const TambahSubkriteriaPage = () => {
+  const [alert, setAlert] = useState<{
+    type: "success" | "error" | "info" | "warning";
+    message: string;
+    show: boolean;
+  }>({
+    type: "success",
+    message: "",
+    show: false,
+  });
   const [kriteriaList, setKriteriaList] = useState<IKriteria[]>([]);
   const [selectedKriteria, setSelectedKriteria] = useState<IKriteria | null>(
     null
@@ -45,7 +53,11 @@ const TambahSubkriteriaPage = () => {
 
     try {
       if (!selectedKriteria) {
-        alert("Kriteria belum dipilih!");
+        setAlert({
+          type: "warning",
+          message: "Kriteria belum dipilih!",
+          show: true,
+        });
         return;
       }
       const newSubkriteria: ISubKriteriaCreate = {
@@ -117,17 +129,6 @@ const TambahSubkriteriaPage = () => {
 
         {/* Nilai Target */}
         <div className="flex flex-col">
-          {/* <label htmlFor="nilaiTarget" className="mb-2">
-            Nilai Target
-          </label>
-          <Input
-            id="nilaiTarget"
-            type="number"
-            value={nilaiTarget}
-            onChange={(e) => setNilaiTarget(Number(e.target.value))}
-            required
-            className="border-gray-300"
-          /> */}
           <label htmlFor="kodeKriteria" className="mb-2">
             Target Penilaian
           </label>
@@ -176,6 +177,12 @@ const TambahSubkriteriaPage = () => {
       </form>
 
       {/* <ToastContainer /> */}
+       <CustomAlert
+              type={alert.type}
+              message={alert.message}
+              show={alert.show}
+              onClose={() => setAlert((prev) => ({ ...prev, show: false }))}
+            />
     </div>
   );
 };

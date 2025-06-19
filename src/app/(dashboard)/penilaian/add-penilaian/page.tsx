@@ -13,18 +13,31 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getAllKriteria } from "@/lib/firestore/kriteria";
+import CustomAlert from "@/components/ui/CustomAlert";
 
 interface PenilaianInput {
+  kriteriaId: string;
   subkriteriaId: string;
   nilai: number;
 }
 
 const AddPenilaianPage = () => {
+  const [alert, setAlert] = useState<{
+      type: "success" | "error";
+      message: string;
+      show: boolean;
+    }>({
+      type: "success",
+      message: "",
+      show: false,
+    });
   const [dosenList, setDosenList] = useState<IDosen[]>([]);
   const [subList, setSubList] = useState<ISubKriteria[]>([]);
+  const [kriteriaList, setKriteriaList] = useState<IKriteria[]>([]);
   const [dosenId, setDosenId] = useState("");
   const [inputs, setInputs] = useState<PenilaianInput[]>([
-    { subkriteriaId: "", nilai: 0 },
+    { kriteriaId: "", subkriteriaId: "", nilai: 0 },
   ]);
 
   const router = useRouter();
@@ -33,8 +46,10 @@ const AddPenilaianPage = () => {
     const fetchData = async () => {
       const dosen = await getAllDosen();
       const sub = await getAllSubkriteria();
+      const kriteria = await getAllKriteria();
       setDosenList(dosen);
       setSubList(sub);
+      setKriteriaList(kriteria);
     };
     fetchData();
   }, []);
@@ -54,7 +69,7 @@ const AddPenilaianPage = () => {
   };
 
   const addInputRow = () => {
-    setInputs([...inputs, { subkriteriaId: "", nilai: 0 }]);
+    setInputs([...inputs, { kriteriaId: "", subkriteriaId: "", nilai: 0 }]);
   };
 
   const removeInputRow = (index: number) => {
@@ -65,12 +80,30 @@ const AddPenilaianPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!dosenId) {
-      alert("Pilih dosen terlebih dahulu");
+      setAlert({
+        type: "error",
+        message: "Pilih dosen terlebih dahulu",
+        show: true,
+      });
       return;
     }
+    const uniqueSubIds = new Set(inputs.map((i) => i.subkriteriaId));
+    if (uniqueSubIds.size < inputs.length) {
+      setAlert({
+        type: "error",
+        message: "Tidak boleh ada subkriteria yang sama!",
+        show: true,
+      });
+      return;
+    }
+
     for (const input of inputs) {
       if (!input.subkriteriaId || input.nilai <= 0) {
-        alert("Semua field subkriteria dan nilai harus diisi dengan benar");
+        setAlert({
+        type: "error",
+        message: "Semua field subkriteria dan nilai harus diisi dengan benar!",
+        show: true,
+      });
         return;
       }
     }
@@ -118,29 +151,29 @@ const AddPenilaianPage = () => {
               className="mb-6 p-4 border border-gray-200 rounded-lg shadow-sm bg-gray-50"
             >
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                <div >
+                <div>
                   <Label className="block mb-2 text-sm font-medium text-gray-700">
                     Kriteria
                   </Label>
                   <Select
-                    value={input.subkriteriaId}
+                    value={input.kriteriaId}
                     onValueChange={(value) =>
-                      handleInputChange(index, "subkriteriaId", value)
+                      handleInputChange(index, "kriteriaId", value)
                     }
                   >
-                    <SelectTrigger className="w-[100%] border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                      <SelectValue placeholder="Pilih Subkriteria" />
+                    <SelectTrigger className="w-full border border-gray-300">
+                      <SelectValue placeholder="Pilih Kriteria" />
                     </SelectTrigger>
-                    <SelectContent className="w-[50%]">
-                      {subList.map((sub) => (
-                        <SelectItem key={sub.id} value={sub.id}>
-                          {sub.subkriteria}
+                    <SelectContent>
+                      {kriteriaList.map((kriteria) => (
+                        <SelectItem key={kriteria.id} value={kriteria.id}>
+                          {kriteria.kriteria}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-                <div >
+                <div>
                   <Label className="block mb-2 text-sm font-medium text-gray-700">
                     Subkriteria
                   </Label>
@@ -149,16 +182,38 @@ const AddPenilaianPage = () => {
                     onValueChange={(value) =>
                       handleInputChange(index, "subkriteriaId", value)
                     }
+                    disabled={!input.kriteriaId}
                   >
-                    <SelectTrigger className="w-[100%] border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                      <SelectValue placeholder="Pilih Subkriteria" />
+                    <SelectTrigger className="w-full border border-gray-300">
+                      <SelectValue
+                        placeholder={
+                          input.kriteriaId
+                            ? "Pilih Subkriteria"
+                            : "Pilih kriteria terlebih dahulu"
+                        }
+                      />
                     </SelectTrigger>
-                    <SelectContent className="w-[50%]">
-                      {subList.map((sub) => (
-                        <SelectItem key={sub.id} value={sub.id}>
-                          {sub.subkriteria}
-                        </SelectItem>
-                      ))}
+                    <SelectContent>
+                      {subList
+                        .filter(
+                          (sub) => sub.kriteriaId === input.kriteriaId // filter by kriteria
+                        )
+                        .map((sub) => {
+                          const alreadySelected = inputs.some(
+                            (inp, i) =>
+                              i !== index && inp.subkriteriaId === sub.id
+                          );
+                          return (
+                            <SelectItem
+                              key={sub.id}
+                              value={sub.id}
+                              disabled={alreadySelected}
+                            >
+                              {sub.subkriteria}
+                              {alreadySelected && " (Sudah dipilih)"}
+                            </SelectItem>
+                          );
+                        })}
                     </SelectContent>
                   </Select>
                 </div>
@@ -167,19 +222,11 @@ const AddPenilaianPage = () => {
                   <Label className="block mb-2 text-sm font-medium text-gray-700">
                     Nilai
                   </Label>
-                  {/* <Input
-                    type="number"
-                    value={input.nilai}
-                    onChange={(e) =>
-                      handleInputChange(index, "nilai", Number(e.target.value))
-                    }
-                    min={0}
-                    max={100}
-                    className="border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  /> */}
                   <Select
                     value={String(input.nilai)} // Convert number to string
-                    onValueChange={(value) =>  handleInputChange(index, "nilai", Number(value))}
+                    onValueChange={(value) =>
+                      handleInputChange(index, "nilai", Number(value))
+                    }
                     required
                   >
                     <SelectTrigger>
@@ -222,6 +269,12 @@ const AddPenilaianPage = () => {
           Simpan Penilaian
         </Button>
       </form>
+      <CustomAlert
+              type={alert.type}
+              message={alert.message}
+              show={alert.show}
+              onClose={() => setAlert((prev) => ({ ...prev, show: false }))}
+            />
     </div>
   );
 };

@@ -28,10 +28,6 @@ const DosenForm = () => {
     subjects: "",
     phone: "",
   });
-
-  // const [loading, setLoading] = useState(false);
-  // const [error, setError] = useState<string | null>(null);
-
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -61,7 +57,7 @@ const DosenForm = () => {
       };
 
       const dosenId = await createDosen(dosenData);
-      console.log(`Dosen created with ID: ${dosenId}`);
+      // console.log(`Dosen created with ID: ${dosenId}`);
 
       setAlert({
         type: "success",
@@ -90,9 +86,6 @@ const DosenForm = () => {
       });
       setTimeout(() => setAlert((prev) => ({ ...prev, show: false })), 3000);
     }
-    // finally {
-    //   // setLoading(false);
-    // }
   };
 
   return (

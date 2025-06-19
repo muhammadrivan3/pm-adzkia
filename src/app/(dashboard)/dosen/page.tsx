@@ -14,8 +14,18 @@ import { Edit, FileDown, Plus, Printer, Trash } from "lucide-react";
 import { deleteDosen, getAllDosen } from "@/lib/firestore/dosen";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import CustomAlert from "@/components/ui/CustomAlert";
 
 const DosenPage = () => {
+  const [alert, setAlert] = useState<{
+    type: "success" | "error" | "info" | "warning";
+    message: string;
+    show: boolean;
+  }>({
+    type: "success",
+    message: "",
+    show: false,
+  });
   const router = useRouter();
   const [dosenData, setDosenData] = useState<IDosen[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -58,7 +68,11 @@ const DosenPage = () => {
   });
 
   const exportToCsv = () => {
-    if (!filteredDosen.length) return alert("Tidak ada data untuk diekspor.");
+    if (!filteredDosen.length) return setAlert({
+          type: "info",
+          message: "Tidak ada data untuk diekspor.",
+          show: true,
+        });
     const headers = ["Nama", "Email", "Role", "Jurusan", "Mata Kuliah", "No. Hp", "Status"];
     const rows = filteredDosen.map((d) => [
       d.name, d.email, d.role, d.department, d.subjects, d.phone, d.status,
@@ -171,6 +185,12 @@ const DosenPage = () => {
           </TableBody>
         </Table>
       </div>
+      <CustomAlert
+              type={alert.type}
+              message={alert.message}
+              show={alert.show}
+              onClose={() => setAlert((prev) => ({ ...prev, show: false }))}
+            />
     </div>
   );
 };

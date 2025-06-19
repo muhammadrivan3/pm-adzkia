@@ -5,8 +5,18 @@ import React, { useState } from "react";
 import { createKriteria } from "@/lib/firestore/kriteria";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import CustomAlert from "@/components/ui/CustomAlert";
 
 const TambahKriteriaPage = () => {
+  const [alert, setAlert] = useState<{
+    type: "success" | "error" | "info" | "warning";
+    message: string;
+    show: boolean;
+  }>({
+    type: "success",
+    message: "",
+    show: false,
+  });
   const [kode, setKode] = useState("");
   const [kriteria, setKriteria] = useState("");
   const [persentaseCore, setPersentaseCore] = useState(0);
@@ -19,13 +29,21 @@ const TambahKriteriaPage = () => {
 
     try {
       if (persentaseCore + persentaseSecondary !== 100) {
-        alert("Total persentase Core dan Secondary harus 100%");
+        setAlert({
+          type: "warning",
+          message: "Total persentase Core dan Secondary harus 100%",
+          show: true,
+        });
         setLoading(false);
         return;
       }
 
       if (persentaseCore <= persentaseSecondary) {
-        alert("Persentase Core harus lebih besar dari Secondary!");
+        setAlert({
+          type: "warning",
+          message: "Persentase Core harus lebih besar dari Secondary!",
+          show: true,
+        });
         setLoading(false);
         return;
       }
@@ -113,6 +131,12 @@ const TambahKriteriaPage = () => {
       </form>
 
       {/* <ToastContainer /> */}
+      <CustomAlert
+        type={alert.type}
+        message={alert.message}
+        show={alert.show}
+        onClose={() => setAlert((prev) => ({ ...prev, show: false }))}
+      />
     </div>
   );
 };
