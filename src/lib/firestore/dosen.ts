@@ -1,25 +1,32 @@
 // lib/firestore/dosen.ts
 import { db } from "../firebase";
-import { collection, addDoc, Timestamp, doc, getDoc, updateDoc, deleteDoc,  getDocs } from "firebase/firestore";
+import {
+  collection,
+  addDoc,
+  Timestamp,
+  doc,
+  getDoc,
+  updateDoc,
+  deleteDoc,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore";
 
 // ✅ CREATE - Menambahkan data dosen
 export const createDosen = async (dosen: {
-  name: string;
+  nama: string;
   email: string;
-  role: string;
-  status: string;
-  department: string;
-  subjects: string[];
+  status:string;
   phone?: string;
+  jabatan:IJabatanPeriode[];
 }) => {
   const dosenData = {
-    name: dosen.name,
+    nama: dosen.nama,
     email: dosen.email,
-    role: dosen.role,
-    status: dosen.status,
-    department: dosen.department,
-    subjects: dosen.subjects,
+    status:dosen.status,
     phone: dosen.phone || null,
+    jabatan: dosen.jabatan,
     createdAt: Timestamp.now(), // Menambahkan timestamp saat data dibuat
   };
 
@@ -54,13 +61,41 @@ export const getDosenById = async (id: string) => {
 };
 
 // ✅ UPDATE - Memperbarui data dosen
-export const updateDosen = async (id: string, data: Partial<{ name: string; email: string; role: string; status: string; department: string; subjects: string[]; phone: string;  }>) => {
+export const updateDosen = async (
+  id: string,
+  data: Partial<{
+    name: string;
+    email: string;
+    role: string;
+    status: string;
+    department: string;
+    subjects: string[];
+    phone: string;
+  }>
+) => {
   const dosenRef = doc(db, "dosen", id);
   await updateDoc(dosenRef, data);
 };
 
 // ✅ DELETE - Menghapus data dosen
 export const deleteDosen = async (id: string) => {
-  const dosenRef = doc(db, "dosen", id);
-  await deleteDoc(dosenRef);
+  // const dosenRef = doc(db, "dosen", id);
+  // await deleteDoc(dosenRef);
+  try {
+    // Hapus semua subkriteria yang terkait dengan kriteriaId
+    const subRef = collection(db, "penilaian");
+    const q = query(subRef, where("dosenId", "==", id));
+    const snapshot = await getDocs(q);
+
+    const deletePenilaianPromises = snapshot.docs.map((doc) => deleteDoc(doc.ref));
+    await Promise.all(deletePenilaianPromises);
+
+    // Hapus dokumen kriteria
+    const dosenRef = doc(db, "dosen", id);
+    await deleteDoc(dosenRef);
+
+    // console.log("Kriteria dan subkriteria berhasil dihapus.");
+  } catch (error) {
+    console.error("Gagal menghapus kriteria:", error);
+  }
 };

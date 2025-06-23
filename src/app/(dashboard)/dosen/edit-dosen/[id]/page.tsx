@@ -11,19 +11,28 @@ import { useParams } from "next/navigation";
 
 const EditDosenForm = () => {
   const { id } = useParams();
+
+  const [jabatanList, setJabatanList] = useState<IJabatanPeriode[]>([
+    {
+      nama: "",
+      departemen: "",
+      mataDiampu: [],
+      periode: "",
+      mulai: "",
+      akhir: "",
+    },
+  ]);
   const [formData, setFormData] = useState({
-    name: "",
+    nama: "",
     email: "",
-    role: "lecture",
     status: "active",
-    department: "",
-    subjects: "",
     phone: "",
+    jabatan: jabatanList,
   });
 
   const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState<{
-    type: "success" | "error";
+    type: "success" | "error" | "info" | "warning";
     message: string;
     show: boolean;
   }>({
@@ -31,6 +40,10 @@ const EditDosenForm = () => {
     message: "",
     show: false,
   });
+  //   useEffect(() => {
+  //   setFormData((prev) => ({ ...prev, jabatan: jabatanList }));
+  // }, [jabatanList]);
+
   useEffect(() => {
     if (id) {
       const fetchUserData = async () => {
@@ -38,22 +51,27 @@ const EditDosenForm = () => {
           // Ambil data user berdasarkan id
           const dosenDoc = await getDosenById(id as string); // Pastikan getUserById mengembalikan data pengguna
           if (dosenDoc) {
+            // const cleanedJabatan = dosenDoc.jabatan.map(
+            //   (j: IJabatanPeriode) => ({
+            //     ...j,
+            //     mataDiampu: (j.mataDiampu || []).join(", "),
+            //   })
+            // );
+            setJabatanList(dosenDoc.jabatan);
             setFormData({
-              name: dosenDoc.name || "",
+              nama: dosenDoc.nama || "",
               email: dosenDoc.email || "",
-              role: dosenDoc.role || "lecture",
               status: dosenDoc.status || "active",
-              department: dosenDoc.department || "",
-              subjects: dosenDoc.subjects?.join(", ") || "",
               phone: dosenDoc.phone || "",
+              jabatan: dosenDoc.jabatan || [],
             });
           }
         } catch (error) {
           console.error("Error fetching user: ", error);
 
           setAlert({
-            type: "success",
-            message: "Dosen Update successfully!",
+            type: "warning",
+            message: "Terjadi kesalahan saat mengambil pengguna!",
             show: true,
           });
           setTimeout(
@@ -81,14 +99,34 @@ const EditDosenForm = () => {
     setLoading(true);
 
     try {
+      // const cleanJabatan = formData.jabatan.map((j) => ({
+      //   ...j,
+      //   mataDiampu: j.mataDiampu
+      //     .flatMap((s) => s.split(","))
+      //     .map((s) => s.trim())
+      //     .filter((s) => s !== ""),
+      // }));
+      // const cleanJabatan = formData.jabatan.map((j) => ({
+      //   ...j,
+      //   mataDiampu: j.mataDiampu
+      //     .split(",") // karena ini string
+      //     .map((s) => s.trim())
+      //     .filter((s) => s !== ""),
+      // }));
+      const cleanJabatan = formData.jabatan.map((j) => ({
+        ...j,
+        mataDiampu: j.mataDiampu
+          .flatMap((s) => s.split(","))
+          .map((s) => s.trim())
+          .filter((s) => s !== ""),
+      }));
+
       const updatedData = {
-        name: formData.name,
+        name: formData.nama,
         email: formData.email,
-        role: formData.role,
         status: formData.status,
-        department: formData.department,
-        subjects: formData.subjects.split(",").map((s) => s.trim()),
         phone: formData.phone || undefined,
+        jabatan: cleanJabatan,
       };
 
       await updateDosen(id as string, updatedData);
@@ -133,7 +171,7 @@ const EditDosenForm = () => {
                 id="name"
                 name="name"
                 type="text"
-                value={formData.name}
+                value={formData.nama}
                 onChange={handleChange}
                 required
               />
@@ -154,42 +192,6 @@ const EditDosenForm = () => {
               />
             </div>
 
-            {/* Department */}
-            <div>
-              <label
-                htmlFor="department"
-                className="text-sm font-medium mb-1 block"
-              >
-                Departemen
-              </label>
-              <Input
-                id="department"
-                name="department"
-                type="text"
-                value={formData.department}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            {/* Subjects */}
-            <div>
-              <label
-                htmlFor="subjects"
-                className="text-sm font-medium mb-1 block"
-              >
-                Mata Kuliah (pisahkan dengan koma)
-              </label>
-              <Input
-                id="subjects"
-                name="subjects"
-                type="text"
-                value={formData.subjects}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
             {/* Phone */}
             <div>
               <label htmlFor="phone" className="text-sm font-medium mb-1 block">
@@ -204,29 +206,199 @@ const EditDosenForm = () => {
               />
             </div>
 
-            {/* Role */}
-            <div>
-              <label htmlFor="role" className="text-sm font-medium mb-1 block">
-                Role
-              </label>
-              <select
-                id="role"
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm"
+            <div className="border-t pt-4">
+              <p className="text-sm font-semibold mb-3 ">
+                Riwayat Periode Jabatan
+              </p>
+
+              {jabatanList.map((jabatan, index) => (
+                <div
+                  key={index}
+                  className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3"
+                >
+                  <div>
+                    <label
+                      htmlFor="subjects"
+                      className="text-sm font-medium mb-1 block text-muted-foreground"
+                    >
+                      Jabatan
+                    </label>
+                    <select
+                      id="role"
+                      name="nama"
+                      value={jabatan.nama}
+                      onChange={(e) =>
+                        setJabatanList((prev) =>
+                          prev.map((j, i) =>
+                            i === index
+                              ? { ...j, nama: e.target.value }
+                              : j
+                          )
+                        )
+                      }
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    >
+                      <option value="dosen">Dosen</option>
+                      <option value="asdos">Asisten Dosen</option>
+                      <option value="staff">Staff TU</option>
+                      <option value="keuangan">Staff Keuangan</option>
+                      <option value="it">Staff IT</option>
+                      <option value="perpustakaan">Pustakawan</option>
+                      <option value="kemahasiswaan">
+                        Bagian Kemahasiswaan
+                      </option>
+                      <option value="security">Security</option>
+                      <option value="laboran">Teknisi Lab</option>
+                      <option value="humas">Humas</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="department"
+                      className="text-sm font-medium mb-1 block text-muted-foreground"
+                    >
+                      Jurusan
+                    </label>
+                    <Input
+                      id="department"
+                      name="department"
+                      type="text"
+                      value={jabatan.departemen}
+                      onChange={(e) =>
+                        setJabatanList((prev) =>
+                          prev.map((j, i) =>
+                            i === index
+                              ? { ...j, departemen: e.target.value }
+                              : j
+                          )
+                        )
+                      }
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="subjects"
+                      className="text-sm font-medium mb-1 block text-muted-foreground"
+                    >
+                      Mata Kuliah (pisahkan dengan koma)
+                    </label>
+                    <Input
+                      id="subjects"
+                      name="subjects"
+                      type="text"
+                      value={jabatan.mataDiampu}
+                      onChange={(e) =>
+                        setJabatanList((prev) =>
+                          prev.map((j, i) =>
+                            i === index
+                              ? { ...j, mataDiampu: [e.target.value] }
+                              : j
+                          )
+                        )
+                      }
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="subjects"
+                      className="text-sm font-medium mb-1 block text-muted-foreground"
+                    >
+                      Periode
+                    </label>
+                    <Input
+                      type="text"
+                      placeholder="Periode (misal 2024-2026)"
+                      value={jabatan.periode}
+                      onChange={(e) =>
+                        setJabatanList((prev) =>
+                          prev.map((j, i) =>
+                            i === index ? { ...j, periode: e.target.value } : j
+                          )
+                        )
+                      }
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="subjects"
+                      className="text-sm font-medium mb-1 block text-muted-foreground"
+                    >
+                      Mulai
+                    </label>
+                    <Input
+                      type="date"
+                      placeholder="Mulai Jabatan"
+                      value={jabatan.mulai}
+                      onChange={(e) =>
+                        setJabatanList((prev) =>
+                          prev.map((j, i) =>
+                            i === index ? { ...j, mulai: e.target.value } : j
+                          )
+                        )
+                      }
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="subjects"
+                      className="text-sm font-medium mb-1 block text-muted-foreground"
+                    >
+                      Akhir
+                    </label>
+                    <Input
+                      type="date"
+                      placeholder="Akhir Jabatan"
+                      value={jabatan.akhir}
+                      onChange={(e) =>
+                        setJabatanList((prev) =>
+                          prev.map((j, i) =>
+                            i === index ? { ...j, akhir: e.target.value } : j
+                          )
+                        )
+                      }
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    {jabatanList.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        onClick={() =>
+                          setJabatanList((prev) =>
+                            prev.filter((_, i) => i !== index)
+                          )
+                        }
+                      >
+                        Hapus
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() =>
+                  setJabatanList((prev) => [
+                    ...prev,
+                    {
+                      nama: "",
+                      departemen: "",
+                      mataDiampu: [],
+                      periode: "",
+                      mulai: "",
+                      akhir: "",
+                    },
+                  ])
+                }
+                className="mt-2"
               >
-                <option value="dosen">Dosen</option>
-                <option value="asdos">Asisten Dosen</option>
-                <option value="staff">Staff TU</option>
-                <option value="keuangan">Staff Keuangan</option>
-                <option value="it">Staff IT</option>
-                <option value="perpustakaan">Pustakawan</option>
-                <option value="kemahasiswaan">Bagian Kemahasiswaan</option>
-                <option value="security">Security</option>
-                <option value="laboran">Teknisi Lab</option>
-                <option value="humas">Humas</option>
-              </select>
+                + Tambah Jabatan
+              </Button>
             </div>
 
             {/* Status */}

@@ -132,6 +132,10 @@
   .print-area,
   .print-area * {
     visibility: visible !important;
+    background-color: transparent !important;
+    background: transparent !important;
+    box-shadow: none;
+    /* border: none; */
   }
   .print-area {
     position: absolute;
@@ -159,7 +163,7 @@
     /* margin-top: 5%; */
   }
   table {
-    border-collapse: collapse;
+    border-collapse: collapse !important;
     width: 100%;
     background-color: transparent !important;
     background: transparent !important;
@@ -175,7 +179,6 @@
   tr,
   .table-row,
   .table-cell {
-    border: 1px solid #000;
     background-color: transparent !important;
     background: none !important;
   }

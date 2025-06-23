@@ -35,9 +35,12 @@ const PenilaianPage = () => {
   const [modalAction, setModalAction] = useState<"delete" | "update" | null>(
     null
   );
-  const [penilaianIdToAction, setPenilaianIdToAction] = useState<
-    string | null
-  >();
+  const [penilaianIdToAction, setPenilaianIdToAction] = useState<string | null>();
+  const [kriteriaFilter, setKriteriaFilter] = useState("");
+  const [periodeFilter, setPeriodeFilter] = useState("");
+  const [allPeriode, setAllPeriode] = useState<string[]>([]);
+  const [allKriteria, setAllKriteria] = useState<string[]>([]);
+  const [dosenData, setDosenData] = useState<IDosen[]>([]);
 
   const printAreaRef = useRef<HTMLDivElement>(null);
 
@@ -59,12 +62,23 @@ const PenilaianPage = () => {
           );
           return {
             ...item,
-            dosenNama: dosen?.name || "Tidak ditemukan",
+            dosenNama: dosen?.nama || "Tidak ditemukan",
             kriteriaNama: kriteria?.kriteria || "Tidak ditemukan",
             subkriteriaNama: sub?.subkriteria || "Tidak ditemukan",
           };
         });
+        // Periode
+        const periodeSet = new Set<string>();
+        dosenList.forEach((d) =>
+          d.jabatan.forEach((j) => periodeSet.add(j.periode))
+        );
+        setAllPeriode(Array.from(periodeSet).sort());
 
+        // Kriteria
+        const kriteriaSet = new Set<string>();
+        enriched.forEach((d) => kriteriaSet.add(d.kriteriaNama));
+        setAllKriteria(Array.from(kriteriaSet).sort());
+        setDosenData(dosenList);
         setData(enriched);
       } catch (error) {
         console.error("Gagal mengambil data penilaian:", error);
@@ -98,26 +112,29 @@ const PenilaianPage = () => {
   };
 
   // Filter and search penilaian
-  const filteredData = data.filter((item) => {
-    const matchesSearch =
-      (item.dosenNama?.toLowerCase().includes(searchQuery.toLowerCase()) ??
-        false) ||
-      (item.subkriteriaNama
-        ?.toLowerCase()
-        .includes(searchQuery.toLowerCase()) ??
-        false) ||
-      (item.nilai?.toString().includes(searchQuery) ?? false);
+  const filteredData = useMemo(() => {
+    return data.filter((item) => {
+      const matchesSearch =
+        item.dosenNama?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.subkriteriaNama
+          ?.toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
+        item.nilai?.toString().includes(searchQuery);
 
-    return matchesSearch;
-  });
+      const matchesKriteria = kriteriaFilter
+        ? item.kriteriaNama === kriteriaFilter
+        : true;
 
-  // Group filteredData by dosenNama
-  // const groupedData = filteredData.reduce((groups, item) => {
-  //   const group = groups[item.dosenNama] || [];
-  //   group.push(item);
-  //   groups[item.dosenNama] = group;
-  //   return groups;
-  // }, {} as Record<string, typeof filteredData>);
+      const matchesPeriode = periodeFilter
+        ? dosenData
+            .find((d) => d.id === item.dosenId)
+            ?.jabatan.some((j) => j.periode === periodeFilter)
+        : true;
+
+      return matchesSearch && matchesKriteria && matchesPeriode;
+    });
+  }, [data, searchQuery, kriteriaFilter, periodeFilter, dosenData]);
+
   const [hiddenDosen, setHiddenDosen] = useState<Record<string, boolean>>({});
   const [hiddenKriteria, setHiddenKriteria] = useState<
     Record<string, Record<string, boolean>>
@@ -133,15 +150,6 @@ const PenilaianPage = () => {
       return acc;
     }, {} as Record<string, Record<string, typeof filteredData>>);
   }, [filteredData]);
-
-  // Without memo
-  // const groupedData = filteredData.reduce((acc, item) => {
-  //   if (!acc[item.dosenNama]) acc[item.dosenNama] = {};
-  //   if (!acc[item.dosenNama][item.kriteriaNama])
-  //     acc[item.dosenNama][item.kriteriaNama] = [];
-  //   acc[item.dosenNama][item.kriteriaNama].push(item);
-  //   return acc;
-  // }, {} as Record<string, Record<string, typeof filteredData>>);
 
   const toggleDosen = (dosenNama: string) => {
     setHiddenDosen((prev) => ({ ...prev, [dosenNama]: !prev[dosenNama] }));
@@ -237,6 +245,31 @@ const PenilaianPage = () => {
           onChange={(e) => setSearchQuery(e.target.value)}
           className="px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 flex-grow min-w-[200px]"
         />
+        <select
+          value={kriteriaFilter}
+          onChange={(e) => setKriteriaFilter(e.target.value)}
+          className="px-3 py-2 rounded-md border bg-white dark:bg-gray-700"
+        >
+          <option value="">Semua Kriteria</option>
+          {allKriteria.map((k) => (
+            <option key={k} value={k}>
+              {k}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={periodeFilter}
+          onChange={(e) => setPeriodeFilter(e.target.value)}
+          className="px-3 py-2 rounded-md border bg-white dark:bg-gray-700"
+        >
+          <option value="">Semua Periode</option>
+          {allPeriode.map((p) => (
+            <option key={p} value={p}>
+              {p}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div
@@ -249,9 +282,9 @@ const PenilaianPage = () => {
           <span className="text-xl font-semibold">LAPORAN INFORMASI DOSEN</span>
           <span className="text-xl font-semibold">UNIVERSITAS ADZKIA</span>
         </div>
-        <Table>
+        <Table className="w-full">
           <TableHeader>
-            <TableRow>
+            <TableRow className="[&>th]:border-2 text-sm text-center">
               <TableHead>Nama Dosen</TableHead>
               <TableHead>Kriteria</TableHead>
               <TableHead>Subkriteria</TableHead>
@@ -263,7 +296,7 @@ const PenilaianPage = () => {
             {Object.entries(groupedData).map(([dosenNama, kriteriaGroup]) => (
               <React.Fragment key={dosenNama}>
                 {/* Header Dosen */}
-                <TableRow className="bg-blue-100 dark:bg-blue-900 font-bold">
+                <TableRow className="bg-blue-100 dark:bg-blue-900 font-bold [&>td]:border-2">
                   <TableCell colSpan={4}>
                     <button
                       onClick={() => toggleDosen(dosenNama)}
@@ -299,7 +332,7 @@ const PenilaianPage = () => {
                       {dosenNama}
                     </button>
                   </TableCell>
-                  <TableCell className="text-center border-2 print:hidden">
+                  <TableCell className="text-center  print:hidden">
                     <Button
                       size="sm"
                       variant="destructive"
@@ -317,7 +350,7 @@ const PenilaianPage = () => {
                   Object.entries(kriteriaGroup).map(
                     ([kriteriaNama, penilaians]) => (
                       <React.Fragment key={kriteriaNama}>
-                        <TableRow className="bg-gray-100 dark:bg-gray-800 font-semibold italic print:bg-none">
+                        <TableRow className="bg-gray-100 dark:bg-gray-800 font-semibold italic print:bg-none [&>td]:border-2">
                           <TableCell></TableCell>
                           <TableCell colSpan={3}>
                             <button
@@ -356,7 +389,7 @@ const PenilaianPage = () => {
                               {kriteriaNama}
                             </button>
                           </TableCell>
-                          <TableCell className="text-center border-2 print:hidden">
+                          <TableCell className="text-center print:hidden">
                             <Button
                               size="sm"
                               variant="destructive"
@@ -372,7 +405,10 @@ const PenilaianPage = () => {
 
                         {!hiddenKriteria[dosenNama]?.[kriteriaNama] &&
                           penilaians.map((item) => (
-                            <TableRow key={item.id}>
+                            <TableRow
+                              key={item.id}
+                              className="[&>td]:border-2 text-sm"
+                            >
                               <TableCell></TableCell>
                               <TableCell></TableCell>
                               <TableCell className="break-words whitespace-normal max-w-[150px] border-2">
@@ -402,6 +438,20 @@ const PenilaianPage = () => {
             ))}
           </TableBody>
         </Table>
+        <div className="print-footer print:flex justify-between p-5 mt-10 hidden">
+          <div>{""}</div>
+          <div>{""}</div>
+          <div className="flex flex-col gap-20">
+            <div className="flex flex-col">
+              <span>Diketahui oleh, </span>
+              <span>Padang .../.../...</span>
+            </div>
+            <div>
+              <span>{"(............................)"}</span>
+              {/* <p className="mt-8">{new Date().toLocaleDateString()}</p> */}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Modal Action */}

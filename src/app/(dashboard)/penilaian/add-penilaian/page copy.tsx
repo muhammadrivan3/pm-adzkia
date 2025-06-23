@@ -6,12 +6,16 @@ import { createPenilaian } from "@/lib/firestore/penilaian";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { getAllKriteria } from "@/lib/firestore/kriteria";
 import CustomAlert from "@/components/ui/CustomAlert";
-
-import { Trash } from "lucide-react";
 import DynamicSelectComboBox from "@/components/ui/DynamicSelectComboBox";
-import clsx from "clsx";
 
 interface PenilaianInput {
   kriteriaId: string;
@@ -36,6 +40,8 @@ const AddPenilaianPage = () => {
   const [inputs, setInputs] = useState<PenilaianInput[]>([
     { kriteriaId: "", subkriteriaId: "", nilai: 0 },
   ]);
+  // const [open, setOpen] = useState(false);
+  // const [selected, setSelected] = useState("");
   const router = useRouter();
 
   useEffect(() => {
@@ -158,25 +164,14 @@ const AddPenilaianPage = () => {
           {inputs.map((input, index) => (
             <div
               key={index}
-              className="relative mb-6 p-4 border border-gray-200 rounded-lg shadow-sm bg-gray-50"
+              className="mb-6 p-4 border border-gray-200 rounded-lg shadow-sm bg-gray-50"
             >
-              <div className="grid grid-cols-1 gap-3 items-end">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                 <div>
                   <Label className="block mb-2 text-sm font-medium text-gray-700">
                     Kriteria
                   </Label>
-                  <DynamicSelectComboBox
-                    data={kriteriaList.map((item) => ({
-                      id: item.id,
-                      name: item.kriteria,
-                    }))}
-                    placeholder="Pilih Kriteria"
-                    onSelect={(item) =>
-                      handleInputChange(index, "kriteriaId", item?.id || "")
-                    }
-                  />
-
-                  {/* <Select
+                  <Select
                     value={input.kriteriaId}
                     onValueChange={(value) =>
                       handleInputChange(index, "kriteriaId", value)
@@ -192,49 +187,13 @@ const AddPenilaianPage = () => {
                         </SelectItem>
                       ))}
                     </SelectContent>
-                  </Select> */}
+                  </Select>
                 </div>
                 <div>
                   <Label className="block mb-2 text-sm font-medium text-gray-700">
                     Subkriteria
                   </Label>
-                  <DynamicSelectComboBox
-                    placeholder={
-                      input.kriteriaId
-                        ? "Pilih Subkriteria"
-                        : "Pilih kriteria terlebih dahulu"
-                    }
-                    data={subList
-                      .filter((sub) => sub.kriteriaId === input.kriteriaId)
-                      .filter(
-                        (sub) =>
-                          !inputs.some(
-                            (inp, i) =>
-                              i !== index && inp.subkriteriaId === sub.id
-                          )
-                      )
-                      .map((sub) => {
-                        const alreadySelected = inputs.some(
-                          (inp, i) =>
-                            i !== index && inp.subkriteriaId === sub.id
-                        );
-                        return {
-                          id: sub.id,
-                          name: alreadySelected
-                            ? `${sub.subkriteria} (Sudah dipilih)`
-                            : sub.subkriteria,
-                          disabled: alreadySelected,
-                        };
-                      })}
-                    onSelect={(item) =>
-                      handleInputChange(index, "subkriteriaId", item?.id || "")
-                    }
-                    className={clsx({
-                      "pointer-events-none opacity-50": !input.kriteriaId,
-                    })}
-                  />
-
-                  {/* <Select
+                  <Select
                     value={input.subkriteriaId}
                     onValueChange={(value) =>
                       handleInputChange(index, "subkriteriaId", value)
@@ -272,39 +231,14 @@ const AddPenilaianPage = () => {
                           );
                         })}
                     </SelectContent>
-                  </Select> */}
+                  </Select>
                 </div>
+
                 <div>
                   <Label className="block mb-2 text-sm font-medium text-gray-700">
                     Nilai
                   </Label>
-                  <DynamicSelectComboBox
-                    placeholder={
-                      input.subkriteriaId
-                        ? "Pilih Nilai"
-                        : "Pilih Subkriteria terlebih dahulu"
-                    }
-                    data={[
-                      { id: "1", name: "Buruk" },
-                      { id: "2", name: "Sedang" },
-                      { id: "3", name: "Cukup" },
-                      { id: "4", name: "Baik" },
-                      { id: "5", name: "Sangat Baik" },
-                    ]}
-                    onSelect={(item) =>
-                      handleInputChange(
-                        index,
-                        "nilai",
-                        item ? Number(item.id) : 0
-                      )
-
-                    }
-                    className={clsx({
-                      "pointer-events-none opacity-50": !input.subkriteriaId,
-                    })}
-                  />
-
-                  {/* <Select
+                  <Select
                     value={String(input.nilai)} // Convert number to string
                     onValueChange={(value) =>
                       handleInputChange(index, "nilai", Number(value))
@@ -321,19 +255,22 @@ const AddPenilaianPage = () => {
                       <SelectItem value="4">Baik</SelectItem>
                       <SelectItem value="5">Sangat Baik</SelectItem>
                     </SelectContent>
-                  </Select> */}
+                  </Select>
                 </div>
+
+                {inputs.length > 1 && (
+                  <div className="flex justify-end">
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      onClick={() => removeInputRow(index)}
+                      className="mt-6"
+                    >
+                      Hapus
+                    </Button>
+                  </div>
+                )}
               </div>
-              {inputs.length > 1 && (
-                <Button
-                  type="button"
-                  variant="destructive"
-                  onClick={() => removeInputRow(index)}
-                  className="absolute top-0 right-0 z-0"
-                >
-                  <Trash />
-                </Button>
-              )}
             </div>
           ))}
         </div>

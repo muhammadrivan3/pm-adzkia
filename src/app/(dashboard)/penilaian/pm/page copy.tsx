@@ -17,9 +17,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { FileDown, Printer, SaveIcon } from "lucide-react";
+import { FileDown, Printer } from "lucide-react";
 import CustomAlert from "@/components/ui/CustomAlert";
-import { createAuditTrail } from "@/lib/firestore/audit-trail";
 
 interface DosenWithGap {
   id: string;
@@ -54,7 +53,9 @@ const ProfileMatchingCalculation = () => {
   const [hasProcessed, setHasProcessed] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
   const [selectedDosen, setSelectedDosen] = useState<DosenWithGap | null>(null);
+
   const [subkriteriaList, setSubkriteriaList] = useState<any[]>([]);
+
   const [showModal, setShowModal] = useState(false);
   const [periodeList, setPeriodeList] = useState<string[]>([]);
   const [selectedPeriode, setSelectedPeriode] = useState<string>("");
@@ -116,7 +117,7 @@ const ProfileMatchingCalculation = () => {
       d.jabatan.some((j) => j.periode === selectedPeriode)
     );
     const groupedByDosen: Record<string, DosenWithGap> = {};
-    dosenFiltered.forEach((d) => {
+    dosen.forEach((d) => {
       groupedByDosen[d.id] = {
         id: d.id,
         nama: d.nama,
@@ -219,58 +220,6 @@ const ProfileMatchingCalculation = () => {
   const printReport = () => {
     window.print(); // ✅ langsung panggil native dialog
   };
-  const SaveData = async () => {
-    if (!hasProcessed || dosenList.length === 0) {
-      setAlert({
-        type: "warning",
-        message: "Belum ada data hasil yang bisa disimpan.",
-        show: true,
-      });
-      return;
-    }
-
-    // Bentuk struktur JSON final
-    const resultSnapshot = {
-      periode: selectedPeriode,
-      timestamp: new Date().toISOString(),
-      data: dosenList
-        .sort((a, b) => b.total - a.total)
-        .map((d, i) => ({
-          no: i + 1,
-          nama: d.nama,
-          total: Number(d.total.toFixed(2)),
-          nilai: d.nilai, // subkriteria => nilai user
-          gap: d.gap, // subkriteria => gap
-          bobot: d.bobot, // subkriteria => bobot
-        })),
-    };
-
-    try {
-      // Simpan ke Firestore dalam format string
-      await createAuditTrail({
-        dosen: "All", // atau bisa dikosongkan kalau bukan individual
-        penilaian: JSON.stringify(resultSnapshot),
-        periode: selectedPeriode,
-      });
-
-      setAlert({
-        type: "success",
-        message: "Snapshot berhasil disimpan ke Firestore!",
-        show: true,
-      });
-    } catch (error) {
-      console.error("❌ Gagal menyimpan snapshot:", error);
-      setAlert({
-        type: "error",
-        message: "Terjadi kesalahan saat menyimpan snapshot.",
-        show: true,
-      });
-    }
-
-    // Simpan ke Firestore? tinggal aktifkan:
-    // await addDoc(collection(db, "riwayat_profile_matching"), resultSnapshot);
-  };
-
   return (
     <div className="p-6 space-y-4">
       {/* Data Dosen */}
@@ -300,6 +249,22 @@ const ProfileMatchingCalculation = () => {
                 </select>
               </div>
             </div>
+
+            {/* <div className="mt-4 text-right">
+              <p className="mb-2 text-sm">
+                Total Bobot:{" "}
+                <span
+                  className={
+                    totalBobot === 100 ? "text-green-600" : "text-red-600"
+                  }
+                >
+                  {totalBobot}%
+                </span>
+              </p>
+              <Button onClick={handleProcess} disabled={totalBobot !== 100}>
+                Prosess
+              </Button>
+            </div> */}
           </>
         )}
       </div>
@@ -394,7 +359,7 @@ const ProfileMatchingCalculation = () => {
             {/* HEADER */}
             <div className="header-print-area flex-col justify-center items-center mb-5 hidden ">
               <span className="text-xl font-semibold">
-                LAPORAN PENILAIAN DOSEN
+                LAPORAN INFORMASI DOSEN
               </span>
               <span className="text-xl font-semibold">UNIVERSITAS ADZKIA</span>
             </div>
@@ -431,25 +396,8 @@ const ProfileMatchingCalculation = () => {
                   ))}
               </TableBody>
             </Table>
-            <div className="print-footer print:flex justify-between p-5 mt-10 hidden">
-              <div>{""}</div>
-              <div>{""}</div>
-              <div className="flex flex-col gap-20">
-                <div className="flex flex-col">
-                  <span>Diketahui oleh, </span>
-                  <span>Padang .../.../...</span>
-                </div>
-                <div>
-                  <span>{"(............................)"}</span>
-                  {/* <p className="mt-8">{new Date().toLocaleDateString()}</p> */}
-                </div>
-              </div>
-            </div>
           </div>
           <div className="flex space-x-4 mt-4">
-            <Button onClick={SaveData} disabled={!hasProcessed}>
-              <SaveIcon className="w-4 h-4" />
-            </Button>
             <Button onClick={exportToCsv} disabled={!hasProcessed}>
               <FileDown className="w-4 h-4" />
             </Button>
@@ -459,8 +407,6 @@ const ProfileMatchingCalculation = () => {
           </div>
         </>
       )}
-
-      {/* Detail Information */}
       {showModal && selectedDosen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white dark:bg-gray-900 p-6 rounded-xl max-w-3xl w-full overflow-y-auto max-h-[90vh] shadow-lg relative">

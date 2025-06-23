@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/table";
 import { FileDown, Printer, SaveIcon } from "lucide-react";
 import CustomAlert from "@/components/ui/CustomAlert";
-import { createAuditTrail } from "@/lib/firestore/audit-trail";
 
 interface DosenWithGap {
   id: string;
@@ -54,7 +53,9 @@ const ProfileMatchingCalculation = () => {
   const [hasProcessed, setHasProcessed] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
   const [selectedDosen, setSelectedDosen] = useState<DosenWithGap | null>(null);
+
   const [subkriteriaList, setSubkriteriaList] = useState<any[]>([]);
+
   const [showModal, setShowModal] = useState(false);
   const [periodeList, setPeriodeList] = useState<string[]>([]);
   const [selectedPeriode, setSelectedPeriode] = useState<string>("");
@@ -219,7 +220,7 @@ const ProfileMatchingCalculation = () => {
   const printReport = () => {
     window.print(); // ✅ langsung panggil native dialog
   };
-  const SaveData = async () => {
+  const SaveData = () => {
     if (!hasProcessed || dosenList.length === 0) {
       setAlert({
         type: "warning",
@@ -229,10 +230,20 @@ const ProfileMatchingCalculation = () => {
       return;
     }
 
+    // Ambil snapshot bobot kriteria yang sedang digunakan
+    const snapshotKriteria = kriteriaList.map((k) => ({
+      id: k.id, // masih oke karena tidak akan berubah, atau bisa dihapus kalau mau full snapshot
+      kriteria: k.kriteria,
+      persentaseCore: k.persentaseCore,
+      persentaseSecondary: k.persentaseSecondary,
+      bobot: k.bobot,
+    }));
+
     // Bentuk struktur JSON final
     const resultSnapshot = {
       periode: selectedPeriode,
       timestamp: new Date().toISOString(),
+      kriteriaSnapshot: snapshotKriteria,
       data: dosenList
         .sort((a, b) => b.total - a.total)
         .map((d, i) => ({
@@ -245,27 +256,13 @@ const ProfileMatchingCalculation = () => {
         })),
     };
 
-    try {
-      // Simpan ke Firestore dalam format string
-      await createAuditTrail({
-        dosen: "All", // atau bisa dikosongkan kalau bukan individual
-        penilaian: JSON.stringify(resultSnapshot),
-        periode: selectedPeriode,
-      });
+    console.log("📌 Snapshot hasil proses profile matching:", resultSnapshot);
 
-      setAlert({
-        type: "success",
-        message: "Snapshot berhasil disimpan ke Firestore!",
-        show: true,
-      });
-    } catch (error) {
-      console.error("❌ Gagal menyimpan snapshot:", error);
-      setAlert({
-        type: "error",
-        message: "Terjadi kesalahan saat menyimpan snapshot.",
-        show: true,
-      });
-    }
+    setAlert({
+      type: "success",
+      message: "Snapshot berhasil dibuat! Lihat console (F12)",
+      show: true,
+    });
 
     // Simpan ke Firestore? tinggal aktifkan:
     // await addDoc(collection(db, "riwayat_profile_matching"), resultSnapshot);
@@ -394,7 +391,7 @@ const ProfileMatchingCalculation = () => {
             {/* HEADER */}
             <div className="header-print-area flex-col justify-center items-center mb-5 hidden ">
               <span className="text-xl font-semibold">
-                LAPORAN PENILAIAN DOSEN
+                LAPORAN INFORMASI DOSEN
               </span>
               <span className="text-xl font-semibold">UNIVERSITAS ADZKIA</span>
             </div>
@@ -431,20 +428,6 @@ const ProfileMatchingCalculation = () => {
                   ))}
               </TableBody>
             </Table>
-            <div className="print-footer print:flex justify-between p-5 mt-10 hidden">
-              <div>{""}</div>
-              <div>{""}</div>
-              <div className="flex flex-col gap-20">
-                <div className="flex flex-col">
-                  <span>Diketahui oleh, </span>
-                  <span>Padang .../.../...</span>
-                </div>
-                <div>
-                  <span>{"(............................)"}</span>
-                  {/* <p className="mt-8">{new Date().toLocaleDateString()}</p> */}
-                </div>
-              </div>
-            </div>
           </div>
           <div className="flex space-x-4 mt-4">
             <Button onClick={SaveData} disabled={!hasProcessed}>

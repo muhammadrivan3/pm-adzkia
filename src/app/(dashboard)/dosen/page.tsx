@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Edit, FileDown, Plus, Printer, Trash } from "lucide-react";
+import { Edit,  Plus, Printer, Trash } from "lucide-react";
 import { deleteDosen, getAllDosen } from "@/lib/firestore/dosen";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -32,12 +32,20 @@ const DosenPage = () => {
   const [roleFilter, setRoleFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const printAreaRef = useRef<HTMLDivElement>(null);
+  const [periodeFilter, setPeriodeFilter] = useState("");
+  const [periodeList, setPeriodeList] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const dosen = await getAllDosen();
         setDosenData(dosen);
+        // Ambil semua periode unik
+        const periodeSet = new Set<string>();
+        dosen.forEach((d) =>
+          d.jabatan.forEach((j) => periodeSet.add(j.periode))
+        );
+        setPeriodeList(Array.from(periodeSet).sort());
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -56,35 +64,57 @@ const DosenPage = () => {
     }
   };
 
-  const filteredDosen = dosenData.filter((dosen) => {
-    const q = searchQuery.toLowerCase();
-    const matchSearch =
-      dosen.name?.toLowerCase().includes(q) ||
-      dosen.email?.toLowerCase().includes(q) ||
-      dosen.role?.toLowerCase().includes(q);
-    const matchRole = roleFilter ? dosen.role === roleFilter : true;
-    const matchStatus = statusFilter ? dosen.status === statusFilter : true;
-    return matchSearch && matchRole && matchStatus;
-  });
+  const filteredDosen = useMemo(() => {
+    return dosenData.filter((dosen) => {
+      const q = searchQuery.toLowerCase();
 
-  const exportToCsv = () => {
-    if (!filteredDosen.length) return setAlert({
-          type: "info",
-          message: "Tidak ada data untuk diekspor.",
-          show: true,
-        });
-    const headers = ["Nama", "Email", "Role", "Jurusan", "Mata Kuliah", "No. Hp", "Status"];
-    const rows = filteredDosen.map((d) => [
-      d.name, d.email, d.role, d.department, d.subjects, d.phone, d.status,
-    ]);
-    const content = "data:text/csv;charset=utf-8," + [headers, ...rows].map((e) => e.join(",")).join("\n");
-    const link = document.createElement("a");
-    link.href = encodeURI(content);
-    link.download = "dosen_report.csv";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+      const matchSearch =
+        dosen.nama?.toLowerCase().includes(q) ||
+        dosen.email?.toLowerCase().includes(q);
+
+      const matchStatus = statusFilter ? dosen.status === statusFilter : true;
+
+      const matchPeriode = periodeFilter
+        ? dosen.jabatan.some((j) => j.periode === periodeFilter)
+        : true;
+
+      return matchSearch && matchStatus && matchPeriode;
+    });
+  }, [searchQuery, statusFilter, periodeFilter, dosenData]);
+
+  // const exportToCsv = () => {
+  //   if (!filteredDosen.length)
+  //     return setAlert({
+  //       type: "info",
+  //       message: "Tidak ada data untuk diekspor.",
+  //       show: true,
+  //     });
+  //   const headers = [
+  //     "Nama",
+  //     "Email",
+  //     "Role",
+  //     "Jurusan",
+  //     "Mata Kuliah",
+  //     "No. Hp",
+  //     "Status",
+  //   ];
+  //   const rows = filteredDosen.map((d) => [
+  //     d.nama,
+  //     d.email,
+  //     d.jabatan,
+  //     d.phone,
+  //     d.status,
+  //   ]);
+  //   const content =
+  //     "data:text/csv;charset=utf-8," +
+  //     [headers, ...rows].map((e) => e.join(",")).join("\n");
+  //   const link = document.createElement("a");
+  //   link.href = encodeURI(content);
+  //   link.download = "dosen_report.csv";
+  //   document.body.appendChild(link);
+  //   link.click();
+  //   document.body.removeChild(link);
+  // };
 
   const printReport = () => {
     window.print(); // ✅ langsung panggil native dialog
@@ -103,9 +133,9 @@ const DosenPage = () => {
               <Plus className="w-4 h-4" /> Tambah Dosen
             </Link>
           </Button>
-          <Button onClick={exportToCsv} disabled={!filteredDosen.length}>
+          {/* <Button onClick={exportToCsv} disabled={!filteredDosen.length}>
             <FileDown className="w-4 h-4" />
-          </Button>
+          </Button> */}
           <Button onClick={printReport} disabled={!filteredDosen.length}>
             <Printer className="w-4 h-4" />
           </Button>
@@ -121,12 +151,33 @@ const DosenPage = () => {
           onChange={(e) => setSearchQuery(e.target.value)}
           className="px-3 py-2 rounded-md border bg-white dark:bg-gray-700 flex-grow min-w-[200px]"
         />
-        <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className="px-3 py-2 rounded-md border bg-white dark:bg-gray-700">
+        <select
+          value={roleFilter}
+          onChange={(e) => setRoleFilter(e.target.value)}
+          className="px-3 py-2 rounded-md border bg-white dark:bg-gray-700"
+        >
           <option value="">Semua Role</option>
           <option value="dosen">Dosen</option>
           {/* dst */}
         </select>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2 rounded-md border bg-white dark:bg-gray-700">
+        <select
+          value={periodeFilter}
+          onChange={(e) => setPeriodeFilter(e.target.value)}
+          className="px-3 py-2 rounded-md border bg-white dark:bg-gray-700"
+        >
+          <option value="">Semua Periode</option>
+          {periodeList.map((p) => (
+            <option key={p} value={p}>
+              {p}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="px-3 py-2 rounded-md border bg-white dark:bg-gray-700"
+        >
           <option value="">Semua Status</option>
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
@@ -138,45 +189,66 @@ const DosenPage = () => {
         ref={printAreaRef}
         className="print-area relative rounded-b-xl overflow-hidden border border-gray-300 dark:border-gray-700 "
       >
-        <img
-          src="/img/adzkia.png"
-          alt=""
-          className="watermark-print  hidden"
-        />
+        <img src="/img/adzkia.png" alt="" className="watermark-print  hidden" />
         {/* HEADER */}
-        <div className="header-print-area flex-col justify-center items-center mb-5 hidden" >
+        <div className="header-print-area flex-col justify-center items-center mb-5 hidden">
           <span className="text-xl font-semibold">LAPORAN INFORMASI DOSEN</span>
           <span className="text-xl font-semibold">UNIVERSITAS ADZKIA</span>
         </div>
-        <Table className="w-full">
-          {/* <TableCaption>Daftar Dosen Terdaftar ok</TableCaption> */}
+        <Table className="w-full ">
           <TableHeader>
-            <TableRow>
+            <TableRow className="[&>th]:border-2 text-sm text-center">
               <TableHead>Nama</TableHead>
               <TableHead>Email</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Jurusan</TableHead>
-              <TableHead>Mata Kuliah</TableHead>
               <TableHead>No. Hp</TableHead>
+              <TableHead className="text-center">
+                <span>Jabatan</span>
+                <div className="w-full grid grid-cols-2 gap-2 mt-1 text-xs">
+                  <span>N. Jabatan</span>
+                  <span className="border-l-2">Periode</span>
+                </div>
+              </TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="no-print text-center">Aksi</TableHead>
             </TableRow>
           </TableHeader>
+
           <TableBody>
             {filteredDosen.map((dosen) => (
-              <TableRow key={dosen.id}>
-                <TableCell>{dosen.name}</TableCell>
+              <TableRow key={dosen.id} className="[&>td]:border-2 text-sm">
+                <TableCell>{dosen.nama}</TableCell>
                 <TableCell>{dosen.email}</TableCell>
-                <TableCell>{dosen.role}</TableCell>
-                <TableCell>{dosen.department}</TableCell>
-                <TableCell>{dosen.subjects}</TableCell>
                 <TableCell>{dosen.phone}</TableCell>
+                <TableCell>
+                  <div className="divide-y divide-border print:divide-y print:divide-border">
+                    {dosen.jabatan.map((it, idx) => (
+                      <div
+                        key={idx}
+                        className="grid grid-cols-2 gap-2 py-2 text-sm"
+                      >
+                        <div className="text-left">{it.nama}</div>
+                        <div className="text-left border-l pl-2">
+                          {it.periode}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </TableCell>
+
                 <TableCell>{dosen.status}</TableCell>
                 <TableCell className="no-print text-center space-x-2">
-                  <Button size="sm" variant="secondary" onClick={() => handleEdit(dosen.id)}>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => handleEdit(dosen.id)}
+                  >
                     <Edit className="w-4 h-4" />
                   </Button>
-                  <Button size="sm" variant="destructive" onClick={() => handleDelete(dosen.id)}>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => handleDelete(dosen.id)}
+                  >
                     <Trash className="w-4 h-4" />
                   </Button>
                 </TableCell>
@@ -184,13 +256,26 @@ const DosenPage = () => {
             ))}
           </TableBody>
         </Table>
+        <div className="print-footer print:flex justify-between p-5 mt-10 hidden">
+          <div>{""}</div>
+          <div>{""}</div>
+          <div className="flex flex-col gap-20">
+            <div>
+              <span>Diketahui oleh,</span>
+            </div>
+            <div>
+              <span>{"(............................)"}</span>
+              {/* <p className="mt-8">{new Date().toLocaleDateString()}</p> */}
+            </div>
+          </div>
+        </div>
       </div>
       <CustomAlert
-              type={alert.type}
-              message={alert.message}
-              show={alert.show}
-              onClose={() => setAlert((prev) => ({ ...prev, show: false }))}
-            />
+        type={alert.type}
+        message={alert.message}
+        show={alert.show}
+        onClose={() => setAlert((prev) => ({ ...prev, show: false }))}
+      />
     </div>
   );
 };

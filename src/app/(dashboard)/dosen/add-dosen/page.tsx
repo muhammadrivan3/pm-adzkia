@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,15 +19,26 @@ const DosenForm = () => {
     show: false,
   });
 
+  const [jabatanList, setJabatanList] = useState<IJabatanPeriode[]>([
+    {
+      nama: "",
+      departemen: "",
+      mataDiampu: [],
+      periode: "",
+      mulai: "",
+      akhir: "",
+    },
+  ]);
   const [formData, setFormData] = useState({
-    name: "",
+    nama: "",
     email: "",
-    role: "lecture",
     status: "active",
-    department: "",
-    subjects: "",
     phone: "",
+    jabatan: jabatanList,
   });
+  useEffect(() => {
+    setFormData((prev) => ({ ...prev, jabatan: jabatanList }));
+  }, [jabatanList]);
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -42,21 +53,24 @@ const DosenForm = () => {
     e.preventDefault();
     // setLoading(true);
     // setError(null);
-
     try {
-      const { name, email, role, status, department, subjects, phone } =
-        formData;
+      const { nama, email, status, phone, jabatan } = formData;
+      const cleanJabatan = jabatan.map((j) => ({
+        ...j,
+        mataDiampu: j.mataDiampu
+          .flatMap((s) => s.split(","))
+          .map((s) => s.trim())
+          .filter((s) => s !== ""),
+      }));
       const dosenData = {
-        name,
+        nama,
         email,
-        role,
         status,
-        department,
-        subjects: subjects.split(",").map((s) => s.trim()),
         phone,
+        jabatan: cleanJabatan,
       };
 
-      const dosenId = await createDosen(dosenData);
+      await createDosen(dosenData);
       // console.log(`Dosen created with ID: ${dosenId}`);
 
       setAlert({
@@ -66,14 +80,13 @@ const DosenForm = () => {
       });
 
       setFormData({
-        name: "",
+        nama: "",
         email: "",
-        role: "lecture",
         status: "active",
-        department: "",
-        subjects: "",
         phone: "",
+        jabatan: [],
       });
+      setJabatanList([]);
 
       setTimeout(() => setAlert((prev) => ({ ...prev, show: false })), 3000);
     } catch (error) {
@@ -105,9 +118,9 @@ const DosenForm = () => {
               </label>
               <Input
                 id="name"
-                name="name"
+                name="nama"
                 type="text"
-                value={formData.name}
+                value={formData.nama}
                 onChange={handleChange}
                 required
               />
@@ -128,40 +141,6 @@ const DosenForm = () => {
             </div>
 
             <div>
-              <label
-                htmlFor="department"
-                className="text-sm font-medium mb-1 block"
-              >
-                Jurusan
-              </label>
-              <Input
-                id="department"
-                name="department"
-                type="text"
-                value={formData.department}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="subjects"
-                className="text-sm font-medium mb-1 block"
-              >
-                Mata Kuliah (pisahkan dengan koma)
-              </label>
-              <Input
-                id="subjects"
-                name="subjects"
-                type="text"
-                value={formData.subjects}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div>
               <label htmlFor="phone" className="text-sm font-medium mb-1 block">
                 Nomor Telepon
               </label>
@@ -174,7 +153,202 @@ const DosenForm = () => {
               />
             </div>
 
-            <div>
+            <div className="border-t pt-4">
+              <p className="text-sm font-semibold mb-3 ">
+                Riwayat Periode Jabatan
+              </p>
+
+              {jabatanList.map((jabatan, index) => (
+                <div
+                  key={index}
+                  className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3"
+                >
+                  <div>
+                    <label
+                      htmlFor="subjects"
+                      className="text-sm font-medium mb-1 block text-muted-foreground"
+                    >
+                      Jabatan
+                    </label>
+                    <select
+                      id="role"
+                      name="nama"
+                      value={jabatan.nama}
+                      onChange={(e) =>
+                        setJabatanList((prev) =>
+                          prev.map((j, i) =>
+                            i === index
+                              ? { ...j, nama: e.target.value }
+                              : j
+                          )
+                        )
+                      }
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    >
+                      <option value="dosen" selected>Dosen</option>
+                      <option value="asdos">Asisten Dosen</option>
+                      <option value="staff">Staff TU</option>
+                      <option value="keuangan">Staff Keuangan</option>
+                      <option value="it">Staff IT</option>
+                      <option value="perpustakaan">Pustakawan</option>
+                      <option value="kemahasiswaan">
+                        Bagian Kemahasiswaan
+                      </option>
+                      <option value="security">Security</option>
+                      <option value="laboran">Teknisi Lab</option>
+                      <option value="humas">Humas</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="department"
+                      className="text-sm font-medium mb-1 block text-muted-foreground"
+                    >
+                      Jurusan
+                    </label>
+                    <Input
+                      id="department"
+                      name="department"
+                      type="text"
+                      value={jabatan.departemen}
+                      onChange={(e) =>
+                        setJabatanList((prev) =>
+                          prev.map((j, i) =>
+                            i === index
+                              ? { ...j, departemen: e.target.value }
+                              : j
+                          )
+                        )
+                      }
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="subjects"
+                      className="text-sm font-medium mb-1 block text-muted-foreground"
+                    >
+                      Mata Kuliah (pisahkan dengan koma)
+                    </label>
+                    <Input
+                      id="subjects"
+                      name="subjects"
+                      type="text"
+                      value={jabatan.mataDiampu.join(", ")}
+                      onChange={(e) =>
+                        setJabatanList((prev) =>
+                          prev.map((j, i) =>
+                            i === index
+                              ? { ...j, mataDiampu: [e.target.value] }
+                              : j
+                          )
+                        )
+                      }
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="subjects"
+                      className="text-sm font-medium mb-1 block text-muted-foreground"
+                    >
+                      Periode
+                    </label>
+                    <Input
+                      type="text"
+                      placeholder="Periode (misal 2024-2026)"
+                      value={jabatan.periode}
+                      onChange={(e) =>
+                        setJabatanList((prev) =>
+                          prev.map((j, i) =>
+                            i === index ? { ...j, periode: e.target.value } : j
+                          )
+                        )
+                      }
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="subjects"
+                      className="text-sm font-medium mb-1 block text-muted-foreground"
+                    >
+                      Mulai
+                    </label>
+                    <Input
+                      type="date"
+                      placeholder="Mulai Jabatan"
+                      value={jabatan.mulai}
+                      onChange={(e) =>
+                        setJabatanList((prev) =>
+                          prev.map((j, i) =>
+                            i === index ? { ...j, mulai: e.target.value } : j
+                          )
+                        )
+                      }
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="subjects"
+                      className="text-sm font-medium mb-1 block text-muted-foreground"
+                    >
+                      Akhir
+                    </label>
+                  <Input
+                      type="date"
+                      placeholder="Akhir Jabatan"
+                      value={jabatan.akhir}
+                      onChange={(e) =>
+                        setJabatanList((prev) =>
+                          prev.map((j, i) =>
+                            i === index ? { ...j, akhir: e.target.value } : j
+                          )
+                        )
+                      }
+                    />
+                    </div>
+                  <div className="flex gap-2">
+                    {jabatanList.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        onClick={() =>
+                          setJabatanList((prev) =>
+                            prev.filter((_, i) => i !== index)
+                          )
+                        }
+                      >
+                        Hapus
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() =>
+                  setJabatanList((prev) => [
+                    ...prev,
+                    {
+                      nama: "",
+                      departemen: "",
+                      mataDiampu: [],
+                      periode: "",
+                      mulai: "",
+                      akhir: "",
+                    },
+                  ])
+                }
+                className="mt-2"
+              >
+                + Tambah Jabatan
+              </Button>
+            </div>
+
+            {/* <div>
               <label htmlFor="role" className="text-sm font-medium mb-1 block">
                 Role
               </label>
@@ -196,7 +370,7 @@ const DosenForm = () => {
                 <option value="laboran">Teknisi Lab</option>
                 <option value="humas">Humas</option>
               </select>
-            </div>
+            </div> */}
 
             <div>
               <label

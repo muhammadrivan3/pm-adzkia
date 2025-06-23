@@ -19,13 +19,22 @@ interface IUserCreate {
 
 interface IDosen {
   id: string;
-  name: string;
+  nama: string;
   email: string;
-  role: string;
+  // role: string;
   status: string;
-  department: string;
-  subjects: string[];
   phone?: string;
+   // Periode Jabatan
+  jabatan: IJabatanPeriode[];
+}
+
+interface IJabatanPeriode {
+  nama:string;
+  departemen: string;
+  mataDiampu: string[];
+  periode: string;           // contoh: "2024-2025"
+  mulai: string;             // format ISO: "2024-08-01"
+  akhir: string;             // format ISO: "2025-07-31"
 }
 
 interface IKriteria {
@@ -71,4 +80,17 @@ interface IPenilaianCreate {
   dosenId: string;
   subkriteriaId: string;
   nilai: number;
+}
+
+interface IPenilaianAuditTrail {
+  id?: string; // <-- opsional, akan di-generate Firestore
+  dosen: string; // nama dosen
+  penilaian: string; // stringified JSON hasil penilaian (total, nilai, gap, bobot)
+  periode: string;
+}
+
+interface IPenilaianAuditTrailCreate {
+  dosen: string;
+  penilaian: string;
+  periode: string;  
 }

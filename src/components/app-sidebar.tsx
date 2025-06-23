@@ -46,6 +46,11 @@ const items = [
     url: "/aspek",
     icon: Settings,
   },
+  {
+    title: "Log Acticity",
+    url: "/log-activity",
+    icon: Settings,
+  },
 ];
 
 export function AppSidebar() {

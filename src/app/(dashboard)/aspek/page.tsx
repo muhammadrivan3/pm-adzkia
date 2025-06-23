@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { deleteKriteria, getAllKriteria } from "@/lib/firestore/kriteria";
 import {
   deleteSubkriteria,
@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -17,7 +18,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Edit, Plus, Trash } from "lucide-react";
+import { Edit, Plus, Printer, Trash } from "lucide-react";
 import ActionModal from "@/components/ui/ActionModal";
 import { useRouter } from "next/navigation";
 
@@ -43,6 +44,7 @@ const AspekPage = () => {
   const [subKriteriaIdToAction, setSubKriteriaIdToAction] = useState<
     string | null
   >(null);
+    const printAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -155,6 +157,9 @@ const AspekPage = () => {
     setSubKriteriaIdToAction(null);
     setModalAction(null);
   };
+  const printReport = () => {
+    window.print(); // ✅ langsung panggil native dialog
+  };
 
   return (
     <div className="w-full min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 p-6">
@@ -174,6 +179,9 @@ const AspekPage = () => {
               <Plus className="w-4 h-4" /> Tambah Sub-Aspek
             </Link>
           </Button>
+           <Button className="gap-2" onClick={printReport}>
+            <Printer className="w-4 h-4" />
+          </Button>
         </div>
       </div>
 
@@ -188,99 +196,40 @@ const AspekPage = () => {
         />
       </div>
 
-      {/* Kriteria Only Table */}
-      <div className="rounded-b-xl overflow-hidden border border-t-0 border-gray-200 dark:border-gray-700 shadow-lg mb-6">
-        <Card>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow >
-                  <TableHead className="w-[100px]">Kode</TableHead>
-                  <TableHead >Kriteria</TableHead>
-                  <TableHead >Core (%)</TableHead>
-                  <TableHead>Secondary (%)</TableHead>
-                  <TableHead>Aksi</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredKriteria.map((kriteria) => (
-                  <TableRow key={kriteria.kode}>
-                    <TableCell>{kriteria.kode}</TableCell>
-                    <TableCell>{kriteria.kriteria}</TableCell>
-                    <TableCell className="text-start space-x-2">{kriteria.persentaseCore}</TableCell>
-                    <TableCell className="text-start space-x-2">{kriteria.persentaseSecondary}</TableCell>
-                    <TableCell className="text-start space-x-2">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        className="px-2"
-                        onClick={() =>
-                          openModal(
-                            kriteria.id,
-                            "update",
-                            "Anda yakin ingin mengubah kriteria ini?",
-                            "kriteria"
-                          )
-                        }
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        className="px-2"
-                        onClick={() =>
-                          openModal(
-                            kriteria.id,
-                            "delete",
-                            "Anda yakin ingin menghapus kriteria ini?",
-                            "kriteria"
-                          )
-                        }
-                      >
-                        <Trash className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
+      <div
+        ref={printAreaRef}
+        className="print-area relative rounded-b-xl overflow-hidden "
+      >
+        <img src="/img/adzkia.png" alt="" className="watermark-print  hidden" />
+        {/* HEADER */}
+        <div className="header-print-area flex-col justify-center items-center mb-5 hidden ">
+          <span className="text-xl font-semibold">LAPORAN INFORMASI KRITERIA</span>
+          <span className="text-xl font-semibold">UNIVERSITAS ADZKIA</span>
+        </div>
+        {/* Kriteria Only Table */}
+        <div className="rounded-b-xl overflow-hidden border border-t-0 border-gray-200 dark:border-gray-700 shadow-lg mb-6 print:shadow-none print:border-none print:rounded-none">
+          <Card >
+            <CardContent>
+              <Table>
+                <TableCaption>
+                  Laporan Informasi Kriteria
+                </TableCaption>
+                <TableHeader>
+                  <TableRow >
+                    <TableHead className="w-[100px]">Kode</TableHead>
+                    <TableHead >Kriteria</TableHead>
+                    <TableHead >Core (%)</TableHead>
+                    <TableHead>Secondary (%)</TableHead>
+                    <TableHead>Aksi</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Sub Kriteria */}
-      <div className="rounded-b-xl overflow-hidden border border-t-0 border-gray-200 dark:border-gray-700 shadow-lg">
-        <Card>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[100px]">Kode</TableHead>
-                  <TableHead>Kriteria</TableHead>
-                  <TableHead>Subkriteria</TableHead>
-                  <TableHead>Nilai Target</TableHead>
-                  <TableHead>Tipe</TableHead>
-                  <TableHead>Aksi</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredDataSubkriteria.map((kriteria) =>
-                  kriteria.subkriteria.map((sub, idx) => (
-                    <TableRow key={sub.kode}>
-                      {idx === 0 ? (
-                        <>
-                          <TableCell rowSpan={kriteria.subkriteria.length}>
-                            {kriteria.kode}
-                          </TableCell>
-                          <TableCell rowSpan={kriteria.subkriteria.length}>
-                            {kriteria.kriteria}
-                          </TableCell>
-                        </>
-                      ) : null}
-                      <TableCell>{sub.subkriteria}</TableCell>
-                      <TableCell>{sub.nilaiTarget}</TableCell>
-                      <TableCell>{sub.tipe}</TableCell>
+                </TableHeader>
+                <TableBody>
+                  {filteredKriteria.map((kriteria) => (
+                    <TableRow key={kriteria.kode}>
+                      <TableCell>{kriteria.kode}</TableCell>
+                      <TableCell>{kriteria.kriteria}</TableCell>
+                      <TableCell className="text-start space-x-2">{kriteria.persentaseCore}</TableCell>
+                      <TableCell className="text-start space-x-2">{kriteria.persentaseSecondary}</TableCell>
                       <TableCell className="text-start space-x-2">
                         <Button
                           size="sm"
@@ -288,10 +237,10 @@ const AspekPage = () => {
                           className="px-2"
                           onClick={() =>
                             openModal(
-                              sub.id,
+                              kriteria.id,
                               "update",
-                              "Anda yakin ingin mengubah subkriteria ini?",
-                              "subKriteria"
+                              "Anda yakin ingin mengubah kriteria ini?",
+                              "kriteria"
                             )
                           }
                         >
@@ -303,10 +252,10 @@ const AspekPage = () => {
                           className="px-2"
                           onClick={() =>
                             openModal(
-                              sub.id,
+                              kriteria.id,
                               "delete",
-                              "Anda yaking ingin menghapus subkriteria ini?",
-                              "subKriteria"
+                              "Anda yakin ingin menghapus kriteria ini?",
+                              "kriteria"
                             )
                           }
                         >
@@ -314,13 +263,92 @@ const AspekPage = () => {
                         </Button>
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </div>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Sub Kriteria */}
+        <div className="w-full rounded-b-xl overflow-hidden border border-t-0 border-gray-200 dark:border-gray-700 shadow-lg print:shadow-none print:border-none print:rounded-none">
+          <Card>
+            <CardContent>
+              <Table>
+                
+                <TableCaption>
+                  Laporan Informasi Sub-Kriteria
+                </TableCaption>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[100px]">Kode</TableHead>
+                    <TableHead>Kriteria</TableHead>
+                    <TableHead>Subkriteria</TableHead>
+                    <TableHead>Nilai Target</TableHead>
+                    <TableHead>Tipe</TableHead>
+                    <TableHead>Aksi</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredDataSubkriteria.map((kriteria) =>
+                    kriteria.subkriteria.map((sub, idx) => (
+                      <TableRow key={sub.kode}>
+                        {idx === 0 ? (
+                          <>
+                            <TableCell rowSpan={kriteria.subkriteria.length}>
+                              {kriteria.kode}
+                            </TableCell>
+                            <TableCell rowSpan={kriteria.subkriteria.length}>
+                              {kriteria.kriteria}
+                            </TableCell>
+                          </>
+                        ) : null}
+                        <TableCell className="break-words whitespace-normal max-w-[50%]">{sub.subkriteria}</TableCell>
+                        <TableCell>{sub.nilaiTarget}</TableCell>
+                        <TableCell>{sub.tipe}</TableCell>
+                        <TableCell className="text-start space-x-2">
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            className="px-2"
+                            onClick={() =>
+                              openModal(
+                                sub.id,
+                                "update",
+                                "Anda yakin ingin mengubah subkriteria ini?",
+                                "subKriteria"
+                              )
+                            }
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="px-2"
+                            onClick={() =>
+                              openModal(
+                                sub.id,
+                                "delete",
+                                "Anda yaking ingin menghapus subkriteria ini?",
+                                "subKriteria"
+                              )
+                            }
+                          >
+                            <Trash className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
+
+        </div>
+
       {/* Modal Action */}
       <ActionModal
         isOpen={isModalOpen}
