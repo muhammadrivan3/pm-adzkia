@@ -151,7 +151,11 @@ const ProfileMatchingCalculation = () => {
           : gap === -4
           ? 1
           : 0;
+      // console.log("ini bobot :",bobot);
+      // console.log("ini bobot :",bobot);
+      if (!groupedByDosen[p.dosenId]) return;
       groupedByDosen[p.dosenId].bobot[String(p.subkriteriaId)] = bobot;
+      // console.log("ini bobot :",groupedByDosen[p.dosenId].bobot[String(p.subkriteriaId)]);
       groupedByDosen[p.dosenId].nilai[String(p.subkriteriaId)] = p.nilai;
       groupedByDosen[p.dosenId].gap[String(p.subkriteriaId)] = gap;
     });
