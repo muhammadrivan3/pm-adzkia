@@ -5,6 +5,7 @@ import {
   GraduationCap,
   FileBarChart,
   Settings,
+  LogOut,
 } from "lucide-react";
 
 import {
@@ -19,6 +20,7 @@ import {
 } from "@/components/ui/sidebar";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { usePathname } from "next/navigation";
 // Menu items.
 const items = [
   {
@@ -54,11 +56,13 @@ const items = [
 ];
 
 export function AppSidebar() {
+  const pathname = usePathname();
+
   return (
     <Sidebar className="shadow-2xl">
       <SidebarContent>
         <SidebarGroup>
-          <div className="flex justify-center items-center">
+          <div className="flex justify-center items-center ">
             <motion.div
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -87,7 +91,10 @@ export function AppSidebar() {
                   >
                     <SidebarMenuButton
                       asChild
-                      className="transition-all hover:text-sidebar-accent-foreground"
+                      className={`${
+                        pathname === item.url && "border-l-2 border-blue-600"
+                      } transition-all hover:text-sidebar-accent-foreground`}
+                      isActive={pathname === item.url}
                     >
                       <a
                         href={item.url}
@@ -96,16 +103,45 @@ export function AppSidebar() {
                       >
                         <item.icon
                           size={22}
-                          className="transition-transform group-hover:scale-110"
+                          className={`${
+                            pathname === item.url && "text-blue-600"
+                          } transition-transform group-hover:scale-110`}
                         />
-                        <span className=" text-md">
-                          {item.title}
-                        </span>
+                        <span className=" text-md">{item.title}</span>
                       </a>
                     </SidebarMenuButton>
                   </motion.div>
                 </SidebarMenuItem>
               ))}
+              <SidebarMenuItem key="logout">
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  whileHover={{ scale: 1.03 }}
+                  transition={{ duration: 0.3, delay: items.length * 0.1 }}
+                  className="w-full"
+                >
+                  <SidebarMenuButton
+                    asChild
+                    className="text-red-600 hover:text-red-800"
+                    isActive={false}
+                  >
+                    <button
+                      onClick={() => {
+                        document.cookie = "auth_token=; Max-Age=0; path=/";
+                        localStorage.removeItem("user");
+                        window.location.href = "/login";
+                      }}
+                      className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-red-100 transition-colors"
+                      aria-label="Logout"
+                    >
+                      {/* <Settings size={22} /> */}
+                      <LogOut size={22}/>
+                      <span className="text-md">Logout</span>
+                    </button>
+                  </SidebarMenuButton>
+                </motion.div>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

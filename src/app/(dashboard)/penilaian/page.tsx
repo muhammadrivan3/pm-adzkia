@@ -1,7 +1,11 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { deletePenilaian, getAllPenilaian } from "@/lib/firestore/penilaian";
+import {
+  deletePenilaian,
+  deletePenilaianByDosenId,
+  getAllPenilaian,
+} from "@/lib/firestore/penilaian";
 import { getAllDosen } from "@/lib/firestore/dosen";
 import { getAllSubkriteria } from "@/lib/firestore/sub-kriteria";
 import {
@@ -35,7 +39,12 @@ const PenilaianPage = () => {
   const [modalAction, setModalAction] = useState<"delete" | "update" | null>(
     null
   );
-  const [penilaianIdToAction, setPenilaianIdToAction] = useState<string | null>();
+  const [penilaianIdToAction, setPenilaianIdToAction] = useState<
+    string | null
+  >();
+  const [modalActionItem, setModalActionItem] = useState<
+    "by-dosen" | "by-kriteria" | "by-subkriteria" | null
+  >(null);
   const [kriteriaFilter, setKriteriaFilter] = useState("");
   const [periodeFilter, setPeriodeFilter] = useState("");
   const [allPeriode, setAllPeriode] = useState<string[]>([]);
@@ -88,10 +97,18 @@ const PenilaianPage = () => {
     fetchData();
   }, []);
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string, item: string) => {
     if (id) {
-      await deletePenilaian(id); // Delete user from Firestore
-      setData((prevData) => prevData.filter((data) => data.id !== id)); // Update state after deletion
+      if (item === "by-dosen") {
+        // Hapus semua penilaian berdasarkan dosenId
+        console.log(`Deleting all penilaian for dosenId: ${id}`);
+        await deletePenilaianByDosenId(id);
+        setData((prevData) => prevData.filter((data) => data.dosenId !== id));
+      } else if (item === "by-subkriteria") {
+        // Hapus semua penilaian berdasarkan kriteria
+        await deletePenilaian(id); // Delete user from Firestore
+        setData((prevData) => prevData.filter((data) => data.id !== id)); // Update state after deletion
+      }
     }
   };
 
@@ -99,7 +116,12 @@ const PenilaianPage = () => {
     router.push(`/penilaian/edit-penilaian/${id}`);
   };
 
-  const openModal = (id: string, action: "delete" | "update") => {
+  const openModal = (
+    id: string,
+    action: "delete" | "update",
+    item: "by-dosen" | "by-kriteria" | "by-subkriteria"
+  ) => {
+    setModalActionItem(item);
     setPenilaianIdToAction(id);
     setModalAction(action);
     setIsModalOpen(true);
@@ -293,149 +315,165 @@ const PenilaianPage = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {Object.entries(groupedData).map(([dosenNama, kriteriaGroup]) => (
-              <React.Fragment key={dosenNama}>
-                {/* Header Dosen */}
-                <TableRow className="bg-blue-100 dark:bg-blue-900 font-bold [&>td]:border-2">
-                  <TableCell colSpan={4}>
-                    <button
-                      onClick={() => toggleDosen(dosenNama)}
-                      className="hover:underline text-left"
-                    >
-                      {hiddenDosen[dosenNama] ? (
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="w-5 h-5 inline-block mr-1 print:hidden"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <polyline points="6 9 12 15 18 9" />
-                        </svg>
-                      ) : (
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="w-5 h-5 inline-block mr-1 print:hidden"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <polyline points="18 15 12 9 6 15" />
-                        </svg>
-                      )}
-                      {dosenNama}
-                    </button>
-                  </TableCell>
-                  <TableCell className="text-center  print:hidden">
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      className="px-2"
-                      // onClick={() =>
-                      //   openModal(item.id ?? "default-id", "delete")
-                      // }
-                    >
-                      <Trash className="w-4 h-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
+            {Object.entries(groupedData).map(([dosenNama, kriteriaGroup]) => {
+              const sampleItem = Object.values(kriteriaGroup)[0][0];
+              const dosenId = sampleItem.dosenId;
+              return (
+                <React.Fragment key={dosenNama}>
+                  {/* Header Dosen */}
+                  <TableRow className="bg-blue-100 dark:bg-blue-900 font-bold [&>td]:border-2">
+                    <TableCell colSpan={4}>
+                      <button
+                        onClick={() => toggleDosen(dosenNama)}
+                        className="hover:underline text-left"
+                      >
+                        {hiddenDosen[dosenNama] ? (
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="w-5 h-5 inline-block mr-1 print:hidden"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <polyline points="6 9 12 15 18 9" />
+                          </svg>
+                        ) : (
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="w-5 h-5 inline-block mr-1 print:hidden"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <polyline points="18 15 12 9 6 15" />
+                          </svg>
+                        )}
+                        {dosenNama}
+                      </button>
+                    </TableCell>
+                    <TableCell className="text-center  print:hidden">
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        className="px-2"
+                        onClick={() =>
+                          openModal(
+                            dosenId ?? "default-id",
+                            "delete",
+                            "by-dosen"
+                          )
+                        }
+                      >
+                        <Trash className="w-4 h-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
 
-                {!hiddenDosen[dosenNama] &&
-                  Object.entries(kriteriaGroup).map(
-                    ([kriteriaNama, penilaians]) => (
-                      <React.Fragment key={kriteriaNama}>
-                        <TableRow className="bg-gray-100 dark:bg-gray-800 font-semibold italic print:bg-none [&>td]:border-2">
-                          <TableCell></TableCell>
-                          <TableCell colSpan={3}>
-                            <button
-                              onClick={() =>
-                                toggleKriteria(dosenNama, kriteriaNama)
-                              }
-                              className="hover:underline text-left"
-                            >
-                              {hiddenKriteria[dosenNama]?.[kriteriaNama] ? (
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  className="w-5 h-5 inline-block mr-1 print:hidden"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
+                  {!hiddenDosen[dosenNama] &&
+                    Object.entries(kriteriaGroup).map(
+                      ([kriteriaNama, penilaians]) => {
+                        // const sampleItem = Object.values(kriteriaGroup)[0][0];
+                        // const dosenId = sampleItem.dosenId;
+                        return (
+                          <React.Fragment key={kriteriaNama}>
+                            <TableRow className="bg-gray-100 dark:bg-gray-800 font-semibold italic print:bg-none [&>td]:border-2">
+                              <TableCell></TableCell>
+                              <TableCell colSpan={3}>
+                                <button
+                                  onClick={() =>
+                                    toggleKriteria(dosenNama, kriteriaNama)
+                                  }
+                                  className="hover:underline text-left"
                                 >
-                                  <polyline points="6 9 12 15 18 9" />
-                                </svg>
-                              ) : (
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  className="w-5 h-5 inline-block mr-1 print:hidden"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <polyline points="18 15 12 9 6 15" />
-                                </svg>
-                              )}{" "}
-                              {kriteriaNama}
-                            </button>
-                          </TableCell>
-                          <TableCell className="text-center print:hidden">
-                            <Button
+                                  {hiddenKriteria[dosenNama]?.[kriteriaNama] ? (
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      className="w-5 h-5 inline-block mr-1 print:hidden"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    >
+                                      <polyline points="6 9 12 15 18 9" />
+                                    </svg>
+                                  ) : (
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      className="w-5 h-5 inline-block mr-1 print:hidden"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    >
+                                      <polyline points="18 15 12 9 6 15" />
+                                    </svg>
+                                  )}{" "}
+                                  {kriteriaNama}
+                                </button>
+                              </TableCell>
+                              <TableCell className="text-center print:hidden">
+                                {/* <Button
                               size="sm"
                               variant="destructive"
                               className="px-2"
-                              // onClick={() =>
-                              //   openModal(item.id ?? "default-id", "delete")
-                              // }
+                              onClick={() =>
+                                openModal(kriteriaNama ?? "default-id", "delete",'by-kriteria')
+                              }
                             >
                               <Trash className="w-4 h-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-
-                        {!hiddenKriteria[dosenNama]?.[kriteriaNama] &&
-                          penilaians.map((item) => (
-                            <TableRow
-                              key={item.id}
-                              className="[&>td]:border-2 text-sm"
-                            >
-                              <TableCell></TableCell>
-                              <TableCell></TableCell>
-                              <TableCell className="break-words whitespace-normal max-w-[150px] border-2">
-                                {item.subkriteriaNama}
-                              </TableCell>
-                              <TableCell className="border-2 text-center">
-                                {item.nilai}
-                              </TableCell>
-                              <TableCell className="text-center border-2 print:hidden">
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  className="px-2"
-                                  onClick={() =>
-                                    openModal(item.id ?? "default-id", "delete")
-                                  }
-                                >
-                                  <Trash className="w-4 h-4" />
-                                </Button>
+                            </Button> */}
                               </TableCell>
                             </TableRow>
-                          ))}
-                      </React.Fragment>
-                    )
-                  )}
-              </React.Fragment>
-            ))}
+
+                            {!hiddenKriteria[dosenNama]?.[kriteriaNama] &&
+                              penilaians.map((item) => (
+                                <TableRow
+                                  key={item.id}
+                                  className="[&>td]:border-2 text-sm"
+                                >
+                                  <TableCell></TableCell>
+                                  <TableCell></TableCell>
+                                  <TableCell className="break-words whitespace-normal max-w-[150px] border-2">
+                                    {item.subkriteriaNama}
+                                  </TableCell>
+                                  <TableCell className="border-2 text-center">
+                                    {item.nilai}
+                                  </TableCell>
+                                  <TableCell className="text-center border-2 print:hidden">
+                                    <Button
+                                      size="sm"
+                                      variant="destructive"
+                                      className="px-2"
+                                      onClick={() =>
+                                        openModal(
+                                          item.id ?? "default-id",
+                                          "delete",
+                                          "by-subkriteria"
+                                        )
+                                      }
+                                    >
+                                      <Trash className="w-4 h-4" />
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                          </React.Fragment>
+                        );
+                      }
+                    )}
+                </React.Fragment>
+              );
+            })}
           </TableBody>
         </Table>
         <div className="print-footer print:flex justify-between p-5 mt-10 hidden">
@@ -444,10 +482,18 @@ const PenilaianPage = () => {
           <div className="flex flex-col gap-20">
             <div className="flex flex-col">
               <span>Diketahui oleh, </span>
-              <span>Padang .../.../...</span>
+              <span>
+                Padang{" "}
+                {new Date().toLocaleDateString("id-ID", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                })}
+              </span>
             </div>
             <div>
-              <span>{"(............................)"}</span>
+              
+                  <span className="border-b-2">{"( Winda Nopriana, M.Pd )"}</span>
               {/* <p className="mt-8">{new Date().toLocaleDateString()}</p> */}
             </div>
           </div>
@@ -460,7 +506,12 @@ const PenilaianPage = () => {
         onClose={closeModal}
         onConfirm={() => {
           if (modalAction === "delete" && penilaianIdToAction) {
-            handleDelete(penilaianIdToAction);
+            if (modalActionItem) {
+              console.log(
+                `Deleting penilaian with ID: ${modalActionItem} for action`
+              );
+              handleDelete(penilaianIdToAction, modalActionItem);
+            }
           } else if (modalAction === "update" && penilaianIdToAction) {
             handleUpdate(penilaianIdToAction);
           }

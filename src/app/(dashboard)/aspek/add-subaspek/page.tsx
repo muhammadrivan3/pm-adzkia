@@ -68,7 +68,6 @@ const TambahSubkriteriaPage = () => {
         kode: `SK${Date.now()}`, // Bisa menggunakan timestamp sebagai kode unik
         tipe,
       };
-      console.log(newSubkriteria);
       await createSubkriteria(newSubkriteria); // Fungsi untuk menambah subkriteria ke Firestore
       //   toast.success("Subkriteria berhasil ditambahkan!");
       setSubkriteria("");

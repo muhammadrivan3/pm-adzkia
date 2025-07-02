@@ -69,8 +69,6 @@ export const deleteKriteria = async (id: string) => {
     // Hapus dokumen kriteria
     const kriteriaRef = doc(db, "kriteria", id);
     await deleteDoc(kriteriaRef);
-
-    console.log("Kriteria dan subkriteria berhasil dihapus.");
   } catch (error) {
     console.error("Gagal menghapus kriteria:", error);
   }

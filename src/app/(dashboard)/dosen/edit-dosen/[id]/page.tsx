@@ -113,7 +113,7 @@ const EditDosenForm = () => {
       //     .map((s) => s.trim())
       //     .filter((s) => s !== ""),
       // }));
-      const cleanJabatan = formData.jabatan.map((j) => ({
+      const cleanJabatan = jabatanList.map((j) => ({
         ...j,
         mataDiampu: j.mataDiampu
           .flatMap((s) => s.split(","))
@@ -122,7 +122,7 @@ const EditDosenForm = () => {
       }));
 
       const updatedData = {
-        name: formData.nama,
+        nama: formData.nama,
         email: formData.email,
         status: formData.status,
         phone: formData.phone || undefined,
@@ -168,8 +168,8 @@ const EditDosenForm = () => {
                 Nama
               </label>
               <Input
-                id="name"
-                name="name"
+                id="nama"
+                name="nama"
                 type="text"
                 value={formData.nama}
                 onChange={handleChange}
@@ -224,15 +224,13 @@ const EditDosenForm = () => {
                       Jabatan
                     </label>
                     <select
-                      id="role"
-                      name="nama"
+                      id="jabatanNama"
+                      name="jabatanNama"
                       value={jabatan.nama}
                       onChange={(e) =>
                         setJabatanList((prev) =>
                           prev.map((j, i) =>
-                            i === index
-                              ? { ...j, nama: e.target.value }
-                              : j
+                            i === index ? { ...j, nama: e.target.value } : j
                           )
                         )
                       }
@@ -293,7 +291,13 @@ const EditDosenForm = () => {
                         setJabatanList((prev) =>
                           prev.map((j, i) =>
                             i === index
-                              ? { ...j, mataDiampu: [e.target.value] }
+                              ? {
+                                  ...j,
+                                  mataDiampu: e.target.value
+                                    .split(",")
+                                    .map((s) => s.trim())
+                                    .filter((s) => s !== ""),
+                                }
                               : j
                           )
                         )

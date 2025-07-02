@@ -59,6 +59,7 @@ export const findUser = async (email: string, password: string): Promise<Documen
     if (isPasswordValid) {
       return { id: userDoc.id, ...user };
     } else {
+      console.error("Password salah");
       return null; // Password salah
     }
   } else {

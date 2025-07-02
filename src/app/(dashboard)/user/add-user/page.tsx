@@ -53,8 +53,8 @@ const UserForm = () => {
         role,
         status,
       };
-      const userId = await createUser(userData); // Panggil fungsi createUser
-      console.log(`User created with ID: ${userId}`);
+      await createUser(userData); // Panggil fungsi createUser
+     
 
       // Set success alert
       setAlert({

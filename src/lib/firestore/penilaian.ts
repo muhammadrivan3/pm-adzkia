@@ -71,3 +71,12 @@ export const deletePenilaian = async (id: string) => {
   const ref = doc(db, "penilaian", id);
   await deleteDoc(ref);
 };
+
+// 🔸 Hapus semua penilaian berdasarkan dosenId
+export const deletePenilaianByDosenId = async (dosenId: string) => {
+  const q = query(collection(db, "penilaian"), where("dosenId", "==", dosenId));
+  const snapshot = await getDocs(q);
+
+  const batch = snapshot.docs.map((doc) => deleteDoc(doc.ref));
+  await Promise.all(batch); // jalankan paralel
+};

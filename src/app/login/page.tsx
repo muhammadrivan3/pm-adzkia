@@ -24,9 +24,10 @@ export default function LoginPage() {
       if (user) {
         // alert(`Login berhasil! Selamat datang, ${user.name || 'User'} 👋`);
 
-        localStorage.setItem("user", JSON.stringify(user));
+        // localStorage.setItem("user", JSON.stringify(user));
         // redirect jika ingin: window.location.href = "/dashboard";
-         window.location.href = "/"
+         document.cookie = `auth_token=${user.id}; path=/; max-age=86400`;
+        window.location.href = "/";
       } else {
         setAlert({
           type: "error",
@@ -46,17 +47,20 @@ export default function LoginPage() {
     setTimeout(() => setAlert((prev) => ({ ...prev, show: false })), 3000);
   };
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
-      className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 px-4"
-    >
+    <motion.div className="relative min-h-screen flex items-center justify-center  ">
+      <div className="w-full h-full absolute inset-0 z-0 bg-black">
+        <img
+          src="http://localhost:3000/img/bg_login.jpg"
+          alt="Background"
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0  bg-black/50" />
+      </div>
       <motion.div
         initial={{ scale: 0.95 }}
         animate={{ scale: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="max-w-md w-full space-y-10 p-12 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-300 dark:border-gray-700"
+        className="max-w-md w-full space-y-10 p-12 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-300 dark:border-gray-700 z-10"
       >
         <motion.div
           initial={{ opacity: 0 }}

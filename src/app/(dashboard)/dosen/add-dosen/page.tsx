@@ -30,7 +30,7 @@ const DosenForm = () => {
     },
   ]);
   const [formData, setFormData] = useState({
-    nama: "",
+    name: "",
     email: "",
     status: "active",
     phone: "",
@@ -54,7 +54,7 @@ const DosenForm = () => {
     // setLoading(true);
     // setError(null);
     try {
-      const { nama, email, status, phone, jabatan } = formData;
+      const { name, email, status, phone, jabatan } = formData;
       const cleanJabatan = jabatan.map((j) => ({
         ...j,
         mataDiampu: j.mataDiampu
@@ -63,7 +63,7 @@ const DosenForm = () => {
           .filter((s) => s !== ""),
       }));
       const dosenData = {
-        nama,
+        name,
         email,
         status,
         phone,
@@ -71,7 +71,6 @@ const DosenForm = () => {
       };
 
       await createDosen(dosenData);
-      // console.log(`Dosen created with ID: ${dosenId}`);
 
       setAlert({
         type: "success",
@@ -80,7 +79,7 @@ const DosenForm = () => {
       });
 
       setFormData({
-        nama: "",
+        name: "",
         email: "",
         status: "active",
         phone: "",
@@ -118,9 +117,9 @@ const DosenForm = () => {
               </label>
               <Input
                 id="name"
-                name="nama"
+                name="name"
                 type="text"
-                value={formData.nama}
+                value={formData.name}
                 onChange={handleChange}
                 required
               />
@@ -171,8 +170,8 @@ const DosenForm = () => {
                       Jabatan
                     </label>
                     <select
-                      id="role"
-                      name="nama"
+                      id="jabatanNama"
+                      name="jabatanNama"
                       value={jabatan.nama}
                       onChange={(e) =>
                         setJabatanList((prev) =>

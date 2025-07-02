@@ -262,9 +262,14 @@ const DosenPage = () => {
           <div className="flex flex-col gap-20">
             <div>
               <span>Diketahui oleh,</span>
+              <span>Padang {new Date().toLocaleDateString("id-ID", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                })}</span>
             </div>
             <div>
-              <span>{"(............................)"}</span>
+              <span className="border-b-2">{"( Winda Nopriana, M.Pd )"}</span>
               {/* <p className="mt-8">{new Date().toLocaleDateString()}</p> */}
             </div>
           </div>

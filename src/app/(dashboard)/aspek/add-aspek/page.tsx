@@ -59,9 +59,13 @@ const TambahKriteriaPage = () => {
       // Reset form setelah berhasil
       setKode("");
       setKriteria("");
-    } catch (error) {
+    } catch {
       //   toast.error("Gagal menambahkan kriteria. Silakan coba lagi.");
-      console.log(error);
+      setAlert({
+        type: "error",
+        message: "Gagal menambahkan kriteria. Silakan coba lag.",
+        show: true,
+      });
     } finally {
       setLoading(false);
     }

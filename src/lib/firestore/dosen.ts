@@ -15,16 +15,16 @@ import {
 
 // ✅ CREATE - Menambahkan data dosen
 export const createDosen = async (dosen: {
-  nama: string;
+  name: string;
   email: string;
-  status:string;
+  status: string;
   phone?: string;
-  jabatan:IJabatanPeriode[];
+  jabatan: IJabatanPeriode[];
 }) => {
   const dosenData = {
-    nama: dosen.nama,
+    nama: dosen.name,
     email: dosen.email,
-    status:dosen.status,
+    status: dosen.status,
     phone: dosen.phone || null,
     jabatan: dosen.jabatan,
     createdAt: Timestamp.now(), // Menambahkan timestamp saat data dibuat
@@ -66,11 +66,9 @@ export const updateDosen = async (
   data: Partial<{
     name: string;
     email: string;
-    role: string;
     status: string;
-    department: string;
-    subjects: string[];
-    phone: string;
+    phone?: string;
+    jabatan: IJabatanPeriode[];
   }>
 ) => {
   const dosenRef = doc(db, "dosen", id);
@@ -87,14 +85,14 @@ export const deleteDosen = async (id: string) => {
     const q = query(subRef, where("dosenId", "==", id));
     const snapshot = await getDocs(q);
 
-    const deletePenilaianPromises = snapshot.docs.map((doc) => deleteDoc(doc.ref));
+    const deletePenilaianPromises = snapshot.docs.map((doc) =>
+      deleteDoc(doc.ref)
+    );
     await Promise.all(deletePenilaianPromises);
 
     // Hapus dokumen kriteria
     const dosenRef = doc(db, "dosen", id);
     await deleteDoc(dosenRef);
-
-    // console.log("Kriteria dan subkriteria berhasil dihapus.");
   } catch (error) {
     console.error("Gagal menghapus kriteria:", error);
   }

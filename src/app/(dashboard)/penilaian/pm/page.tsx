@@ -151,11 +151,8 @@ const ProfileMatchingCalculation = () => {
           : gap === -4
           ? 1
           : 0;
-      // console.log("ini bobot :",bobot);
-      // console.log("ini bobot :",bobot);
       if (!groupedByDosen[p.dosenId]) return;
       groupedByDosen[p.dosenId].bobot[String(p.subkriteriaId)] = bobot;
-      // console.log("ini bobot :",groupedByDosen[p.dosenId].bobot[String(p.subkriteriaId)]);
       groupedByDosen[p.dosenId].nilai[String(p.subkriteriaId)] = p.nilai;
       groupedByDosen[p.dosenId].gap[String(p.subkriteriaId)] = gap;
     });
@@ -441,10 +438,14 @@ const ProfileMatchingCalculation = () => {
               <div className="flex flex-col gap-20">
                 <div className="flex flex-col">
                   <span>Diketahui oleh, </span>
-                  <span>Padang .../.../...</span>
+                  <span>Padang {new Date().toLocaleDateString("id-ID", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                })}</span>
                 </div>
                 <div>
-                  <span>{"(............................)"}</span>
+                  <span className="border-b-2">{"( Winda Nopriana, M.Pd )"}</span>
                   {/* <p className="mt-8">{new Date().toLocaleDateString()}</p> */}
                 </div>
               </div>

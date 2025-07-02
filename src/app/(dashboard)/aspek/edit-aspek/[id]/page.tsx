@@ -29,7 +29,6 @@ const EditKriteriaPage = () => {
     const fetchData = async () => {
       if (!id) return;
       const data = await getKriteriaById(id as string);
-      console.log("DATA :",data);
       if (data) {
         setKode(data.kode);
         setKriteria(data.kriteria);

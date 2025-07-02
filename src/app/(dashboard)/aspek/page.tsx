@@ -50,7 +50,7 @@ const AspekPage = () => {
     const fetchData = async () => {
       try {
         const kriteriaList = await getAllKriteria(); // Ambil kriteria dari firestore
-        console.log(kriteriaList);
+       
         const combined = await Promise.all(
           kriteriaList.map(async (kriteria: IKriteria) => {
             // Ambil subkriteria berdasarkan kode kriteria
@@ -67,7 +67,7 @@ const AspekPage = () => {
         );
         setDataKriteria(kriteriaList);
         setDataSubKriteria(combined); // Update state dengan data yang sudah lengkap
-        // console.log(dataKriteria);
+        
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -142,9 +142,7 @@ const AspekPage = () => {
       setKriteriaIdToAction(id);
       setModalAction(action);
       setIsModalOpen(true);
-      console.log("id Kriteria : ", id);
     } else if (item === "subKriteria") {
-      console.log("id Sub-Kriteria : ", id);
       setSubKriteriaIdToAction(id);
       setModalAction(action);
       setIsModalOpen(true);
@@ -356,7 +354,6 @@ const AspekPage = () => {
         onConfirm={() => {
           if (modalAction === "delete") {
             if (kriteriaIdToAction) {
-    console.log("start delete");
               handleDelete(kriteriaIdToAction, "kriteria");
             } else if (subKriteriaIdToAction) {
               handleDelete(subKriteriaIdToAction, "subKriteria");
