@@ -50,7 +50,7 @@ export default function LoginPage() {
     <motion.div className="relative min-h-screen flex items-center justify-center  ">
       <div className="w-full h-full absolute inset-0 z-0 bg-black">
         <img
-          src="http://localhost:3000/img/bg_login.jpg"
+          src="/img/bg_login.jpg"
           alt="Background"
           className="w-full h-full object-cover"
         />
